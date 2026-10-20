@@ -161,7 +161,7 @@ function HoleForm({ round, hole }: { round: Round; hole: HoleScore }) {
               else next();
             }}
           >
-            <div className="grid grid-cols-2 gap-4">
+            <div className="flex flex-wrap gap-x-8 gap-y-4">
               <Stepper
                 label="Score"
                 unit="score"

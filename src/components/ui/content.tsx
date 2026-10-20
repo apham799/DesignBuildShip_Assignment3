@@ -44,7 +44,7 @@ export function Badge({ children, tone = "neutral" }: { children: ReactNode; ton
   return (
     <span
       className={cx(
-        "inline-flex w-fit items-center gap-1 rounded-full border px-2.5 py-0.5 text-label",
+        "inline-flex w-fit shrink-0 items-center justify-center gap-1 rounded-full border px-2.5 py-0.5 text-center text-label",
         tone === "neutral" && "border-rule bg-surface text-ink",
         tone === "green" && "border-success/30 bg-success-tint text-success",
         tone === "brass" && "border-brass/50 bg-cream text-ink",

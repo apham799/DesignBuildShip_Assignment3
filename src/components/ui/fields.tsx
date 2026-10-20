@@ -305,7 +305,7 @@ export function Stepper({ label, value, onChange, min = 0, max = 99, hint, error
           onBlur={() => setDraft(null)}
           className={cx(
             control,
-            "h-11 w-14 min-w-0 px-1 text-center font-display text-2xl font-semibold [appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none",
+            "h-11 w-14 shrink-0 px-1 text-center font-display text-2xl font-semibold [appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none",
           )}
         />
         <button type="button" className={stepButton} onClick={() => set(value + 1)} disabled={value >= max} aria-label={`Increase ${name}`} aria-controls={id}>
