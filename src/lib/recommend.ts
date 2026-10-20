@@ -44,7 +44,18 @@ export function roundStats(round: Round): RoundStats {
 
   if (round.mode === "totals" && round.totals) {
     const t = round.totals;
-    return { holes: holes.length, strokes: t.strokes, par, putts: t.putts, fairwaysHit: t.fairwaysHit, fairwaysPossible, greensHit: t.greensHit, penalties: t.penalties, fairwayMisses: {}, greenMisses: {} };
+    return {
+      holes: holes.length,
+      strokes: t.strokes,
+      par,
+      putts: t.putts,
+      fairwaysHit: t.fairwaysHit,
+      fairwaysPossible,
+      greensHit: t.greensHit,
+      penalties: t.penalties,
+      fairwayMisses: {},
+      greenMisses: {},
+    };
   }
 
   const fairwayMisses: Record<string, number> = {};

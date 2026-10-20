@@ -6,7 +6,7 @@ import { coursePar, getCourse, teeYards } from "@/data/courses";
 import { deleteCustomCourse, startRound } from "@/lib/actions";
 import { useStore } from "@/lib/storage";
 import type { Course } from "@/lib/types";
-import { Alert, Button, ButtonLink, Card, ChoiceGroup, LoadingCard, PageHeader } from "@/components/ui";
+import { Alert, Button, ButtonLink, Card, ChoiceGroup, Column, Columns, LoadingCard, Page, PageHeader } from "@/components/ui";
 
 type Load = { status: "loading" } | { status: "error" } | { status: "ready"; course: Course | undefined };
 
@@ -82,97 +82,105 @@ function Setup({ course, noteCount }: { course: Course; noteCount: number }) {
   const yards = teeYards(course, tee, holeCount);
 
   return (
-    <div className="flex flex-col gap-6">
-      <PageHeader title={course.name} back={{ href: "/play", label: "Courses" }} description={course.area} />
+    <Page>
+      <Columns>
+        <Column span={5} sticky>
+          <PageHeader title={course.name} back={{ href: "/play", label: "Courses" }} description={course.area} />
 
-      <Card tone="cream">
-        <dl className="grid grid-cols-3 gap-4">
-          <div>
-            <dt className="text-label text-muted">Holes</dt>
-            <dd className="text-heading">{holeCount}</dd>
-          </div>
-          <div>
-            <dt className="text-label text-muted">Par</dt>
-            <dd className="text-heading">{coursePar(course, holeCount)}</dd>
-          </div>
-          <div>
-            <dt className="text-label text-muted">Yards</dt>
-            <dd className="text-heading">{yards ? yards.toLocaleString() : "—"}</dd>
-          </div>
-        </dl>
-      </Card>
-
-      {noteCount > 0 && (
-        <Alert title={`You have notes on ${noteCount} ${noteCount === 1 ? "hole" : "holes"} here`}>They&rsquo;ll show up on each hole as you play.</Alert>
-      )}
-
-      <form
-        className="flex max-w-md flex-col gap-5"
-        onSubmit={(e) => {
-          e.preventDefault();
-          const id = startRound(course, tee, holeCount);
-          router.push(`/round/${id}/hole/1`);
-        }}
-      >
-        {course.tees.length > 1 && (
-          <ChoiceGroup
-            legend="Tees"
-            name="tee"
-            columns={course.tees.length as 2 | 3}
-            value={tee}
-            onChange={setTee}
-            options={course.tees.map((t) => ({ value: t.id, label: t.name, description: `${teeYards(course, t.id, holeCount).toLocaleString()} yds` }))}
-          />
-        )}
-        {course.holes.length === 18 && (
-          <ChoiceGroup
-            legend="How many holes?"
-            name="holes"
-            columns={2}
-            value={holes}
-            onChange={setHoles}
-            options={[
-              { value: "9", label: "Front 9" },
-              { value: "18", label: "All 18" },
-            ]}
-          />
-        )}
-        <Button type="submit" size="lg" block>
-          Start on hole 1
-        </Button>
-      </form>
-
-      {custom && (
-        <section aria-labelledby="manage" className="flex max-w-md flex-col gap-3 border-t border-rule pt-6">
-          <h2 id="manage" className="text-heading">
-            Your course
-          </h2>
-          <p className="text-body text-muted">Pars you set while playing are saved here for next time.</p>
-          {confirmDelete ? (
-            <div className="flex flex-col gap-3">
-              <p className="text-body">Delete {course.name}? Rounds you played here stay in History.</p>
-              <div className="flex gap-3">
-                <Button
-                  variant="danger"
-                  onClick={() => {
-                    deleteCustomCourse(course.id);
-                    router.push("/play");
-                  }}
-                >
-                  Delete course
-                </Button>
-                <Button variant="secondary" onClick={() => setConfirmDelete(false)}>
-                  Keep it
-                </Button>
+          <Card tone="cream">
+            <dl className="grid grid-cols-3 gap-4">
+              <div>
+                <dt className="text-label text-muted">Holes</dt>
+                <dd className="text-heading">{holeCount}</dd>
               </div>
-            </div>
-          ) : (
-            <Button variant="danger" className="w-fit" onClick={() => setConfirmDelete(true)}>
-              Delete this course
-            </Button>
-          )}
-        </section>
-      )}
-    </div>
+              <div>
+                <dt className="text-label text-muted">Par</dt>
+                <dd className="text-heading">{coursePar(course, holeCount)}</dd>
+              </div>
+              <div>
+                <dt className="text-label text-muted">Yards</dt>
+                <dd className="text-heading">{yards ? yards.toLocaleString() : "—"}</dd>
+              </div>
+            </dl>
+          </Card>
+
+          {noteCount > 0 && <Alert title={`You have notes on ${noteCount} ${noteCount === 1 ? "hole" : "holes"} here`}>They&rsquo;ll show up on each hole as you play.</Alert>}
+        </Column>
+
+        <Column span={7} className="lg:col-start-6 lg:row-span-2 lg:row-start-1">
+          <Card>
+            <form
+              className="flex flex-col gap-5"
+              onSubmit={(e) => {
+                e.preventDefault();
+                const id = startRound(course, tee, holeCount);
+                router.push(`/round/${id}/hole/1`);
+              }}
+            >
+              {course.tees.length > 1 && (
+                <ChoiceGroup
+                  legend="Tees"
+                  name="tee"
+                  columns={course.tees.length as 2 | 3}
+                  value={tee}
+                  onChange={setTee}
+                  options={course.tees.map((t) => ({ value: t.id, label: t.name, description: `${teeYards(course, t.id, holeCount).toLocaleString()} yds` }))}
+                />
+              )}
+              {course.holes.length === 18 && (
+                <ChoiceGroup
+                  legend="How many holes?"
+                  name="holes"
+                  columns={2}
+                  value={holes}
+                  onChange={setHoles}
+                  options={[
+                    { value: "9", label: "Front 9" },
+                    { value: "18", label: "All 18" },
+                  ]}
+                />
+              )}
+              <Button type="submit" size="lg" block>
+                Start on hole 1
+              </Button>
+            </form>
+          </Card>
+        </Column>
+
+        {custom && (
+          <Column span={5} className="lg:col-start-1 lg:row-start-2">
+            <section aria-labelledby="manage" className="flex flex-col gap-3 border-t border-rule pt-6">
+              <h2 id="manage" className="text-heading">
+                Your course
+              </h2>
+              <p className="text-body text-muted">Pars you set while playing are saved here for next time.</p>
+              {confirmDelete ? (
+                <div className="flex flex-col gap-3">
+                  <p className="text-body">Delete {course.name}? Rounds you played here stay in History.</p>
+                  <div className="flex gap-3">
+                    <Button
+                      variant="danger"
+                      onClick={() => {
+                        deleteCustomCourse(course.id);
+                        router.push("/play");
+                      }}
+                    >
+                      Delete course
+                    </Button>
+                    <Button variant="secondary" onClick={() => setConfirmDelete(false)}>
+                      Keep it
+                    </Button>
+                  </div>
+                </div>
+              ) : (
+                <Button variant="danger" className="w-fit" onClick={() => setConfirmDelete(true)}>
+                  Delete this course
+                </Button>
+              )}
+            </section>
+          </Column>
+        )}
+      </Columns>
+    </Page>
   );
 }

@@ -83,6 +83,8 @@ export type Round = {
 
 export type Focus = {
   category: Category;
+  // Other areas the golfer picked; the plan mixes in a drill from each.
+  also?: Category[];
   reason: string;
   lockedAt: string; // ISO
   fromRoundId?: string;
@@ -115,4 +117,8 @@ export type Store = {
   holeNotes: Record<string, Record<number, HoleNote>>;
   customCourses: Course[];
   weeklyGoal: number; // practice sessions per week
+  // Onboarding: one-time tips already dismissed, and whether the getting-started
+  // checklist was hidden.
+  seenTips: string[];
+  checklistDismissed: boolean;
 };

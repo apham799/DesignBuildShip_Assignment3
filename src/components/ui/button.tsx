@@ -11,11 +11,9 @@ const base =
 const variants: Record<Variant, string> = {
   primary:
     "border-green bg-green text-on-green shadow-card hover:border-green-deep hover:bg-green-deep disabled:border-disabled-bg disabled:bg-disabled-bg disabled:text-disabled disabled:shadow-none",
-  secondary:
-    "border-ink bg-surface text-ink hover:bg-cream disabled:border-disabled disabled:text-disabled disabled:hover:bg-surface",
+  secondary: "border-ink bg-surface text-ink hover:bg-cream disabled:border-disabled disabled:text-disabled disabled:hover:bg-surface",
   ghost: "border-transparent bg-transparent text-ink underline-offset-4 hover:bg-cream hover:underline disabled:text-disabled",
-  danger:
-    "border-error bg-surface text-error hover:bg-error-tint disabled:border-disabled disabled:text-disabled disabled:hover:bg-surface",
+  danger: "border-error bg-surface text-error hover:bg-error-tint disabled:border-disabled disabled:text-disabled disabled:hover:bg-surface",
 };
 
 // Large targets: these get tapped with a glove on, standing on a tee box.
@@ -61,14 +59,7 @@ export function ButtonLink({ href, variant = "primary", size = "md", icon, block
 
 export function TextLink({ href, className, children, ...rest }: AnchorHTMLAttributes<HTMLAnchorElement> & { href: string }) {
   return (
-    <Link
-      href={href}
-      className={cx(
-        "rounded-sm font-semibold text-green underline decoration-green/40 decoration-2 underline-offset-[3px] hover:decoration-green",
-        className,
-      )}
-      {...rest}
-    >
+    <Link href={href} className={cx("rounded-sm font-semibold text-green underline decoration-green/40 decoration-2 underline-offset-[3px] hover:decoration-green", className)} {...rest}>
       {children}
     </Link>
   );

@@ -7,7 +7,7 @@ import { logPractice } from "@/lib/actions";
 import { hasErrors, wholeNumber, type Errors } from "@/lib/forms";
 import { useStore } from "@/lib/storage";
 import type { Category, PracticeSession } from "@/lib/types";
-import { Alert, Button, Checkbox, ChoiceGroup, focusFirstError, LoadingCard, PageHeader, TextArea, TextInput } from "@/components/ui";
+import { Alert, Button, Card, Checkbox, ChoiceGroup, Column, Columns, focusFirstError, LoadingCard, Page, PageHeader, TextArea, TextInput } from "@/components/ui";
 
 type FocusChoice = Category | "mixed";
 type Field = "focus" | "minutes" | "balls" | "challenge" | "feel";
@@ -37,13 +37,19 @@ export function PracticeLogScreen() {
   const fromQuery = params.get("focus");
   const focus = isFocus(fromQuery) ? fromQuery : store.focus?.category;
   const minutes = wholeNumber(params.get("minutes") ?? "");
-  return <PracticeLogForm initialFocus={focus} initialMinutes={minutes ?? undefined} />;
+  // Extra areas mixed into the plan, e.g. ?also=approach,driving
+  const fromPlan = isFocus(fromQuery) ? (params.get("also") ?? "").split(",") : (store.focus?.also ?? []);
+  const also = fromPlan.filter((c): c is Category => isFocus(c) && c !== "mixed");
+  return <PracticeLogForm initialFocus={focus} initialMinutes={minutes ?? undefined} also={also} />;
 }
 
-function PracticeLogForm({ initialFocus, initialMinutes }: { initialFocus?: FocusChoice; initialMinutes?: number }) {
+function PracticeLogForm({ initialFocus, initialMinutes, also }: { initialFocus?: FocusChoice; initialMinutes?: number; also: Category[] }) {
   const router = useRouter();
   const formRef = useRef<HTMLFormElement>(null);
-  const planDrills = (f?: FocusChoice) => (f && initialMinutes && [15, 30, 60].includes(initialMinutes) ? buildPlan(f, initialMinutes as 15 | 30 | 60).blocks.flatMap((b) => (b.drillId ? [b.drillId] : [])) : []);
+  const planDrills = (f?: FocusChoice) =>
+    f && initialMinutes && [15, 30, 60].includes(initialMinutes)
+      ? buildPlan(f, initialMinutes as 15 | 30 | 60, f === initialFocus ? also : []).blocks.flatMap((b) => (b.drillId ? [b.drillId] : []))
+      : [];
 
   const [focus, setFocus] = useState<FocusChoice | undefined>(initialFocus);
   const [minutes, setMinutes] = useState(initialMinutes ? String(initialMinutes) : "");
@@ -55,7 +61,10 @@ function PracticeLogForm({ initialFocus, initialMinutes }: { initialFocus?: Focu
   const [errors, setErrors] = useState<Errors<Field>>({});
 
   const challengeDef = focus ? challenges[focus] : undefined;
-  const drillChoices = focus === "mixed" ? drills.filter((d) => ["distance-ladder", "fairway-gates", "lag-ladder"].includes(d.id)) : drills.filter((d) => d.category === focus);
+  // The lead area's drills, plus any mixed in from the plan.
+  const mixedIn = focus === initialFocus ? also : [];
+  const drillChoices =
+    focus === "mixed" ? drills.filter((d) => ["distance-ladder", "fairway-gates", "lag-ladder"].includes(d.id)) : drills.filter((d) => d.category === focus || mixedIn.includes(d.category));
 
   function validate(): Errors<Field> {
     const e: Errors<Field> = {};
@@ -101,69 +110,94 @@ function PracticeLogForm({ initialFocus, initialMinutes }: { initialFocus?: Focu
 
   const errorCount = Object.values(errors).filter(Boolean).length;
 
+  const recap = focus ? buildPlan(focus, initialMinutes === 15 || initialMinutes === 60 ? initialMinutes : 30, mixedIn) : null;
+
   return (
-    <div className="flex flex-col gap-6">
-      <PageHeader title="Log your practice" back={{ href: "/practice", label: "Practice plan" }} description="A minute now means you'll know what worked next time." />
-      {errorCount > 1 && (
-        <Alert tone="error" title={`${errorCount} fields need fixing`}>
-          Each one says what to change.
-        </Alert>
-      )}
-      <form ref={formRef} noValidate onSubmit={submit} className="flex max-w-md flex-col gap-6">
-        <ChoiceGroup
-          legend="What did you work on?"
-          name="focus"
-          columns={2}
-          value={focus}
-          onChange={(v) => {
-            setFocus(v as FocusChoice);
-            setDone(planDrills(v as FocusChoice));
-            setChallenge("");
-          }}
-          options={focusOptions}
-          error={errors.focus}
-          hint={initialFocus ? "Filled in from your plan." : undefined}
-        />
-        <TextInput label="Minutes" inputMode="numeric" value={minutes} onChange={(e) => setMinutes(e.target.value)} error={errors.minutes} autoComplete="off" />
-        <TextInput label="Balls hit" optional inputMode="numeric" value={balls} onChange={(e) => setBalls(e.target.value)} error={errors.balls} autoComplete="off" />
+    <Page>
+      <Columns>
+        <Column span={5}>
+          <PageHeader title="Log your practice" back={{ href: "/practice", label: "Practice plan" }} description="A minute now means you'll know what worked next time." />
+          {recap && (
+            <Card tone="cream" className="hidden flex-col gap-2 lg:flex">
+              <h2 className="text-heading">{recap.minutes}-minute plan</h2>
+              <ol className="flex flex-col gap-1 text-body">
+                {recap.blocks.map((b, i) => (
+                  <li key={b.title}>
+                    {i + 1}. {b.title} <span className="text-muted">· {b.minutes} min</span>
+                  </li>
+                ))}
+              </ol>
+              {challengeDef && (
+                <p className="text-body font-semibold">
+                  Challenge target: {challengeDef.target} of {challengeDef.outOf}
+                </p>
+              )}
+            </Card>
+          )}
+        </Column>
+        <Column span={7}>
+          {errorCount > 1 && (
+            <Alert tone="error" title={`${errorCount} fields need fixing`}>
+              Each one says what to change.
+            </Alert>
+          )}
+          <form ref={formRef} noValidate onSubmit={submit} className="flex max-w-xl flex-col gap-6">
+            <ChoiceGroup
+              legend="What did you work on?"
+              name="focus"
+              columns={2}
+              value={focus}
+              onChange={(v) => {
+                setFocus(v as FocusChoice);
+                setDone(planDrills(v as FocusChoice));
+                setChallenge("");
+              }}
+              options={focusOptions}
+              error={errors.focus}
+              hint={initialFocus ? "Filled in from your plan." : undefined}
+            />
+            <TextInput label="Minutes" inputMode="numeric" value={minutes} onChange={(e) => setMinutes(e.target.value)} error={errors.minutes} autoComplete="off" />
+            <TextInput label="Balls hit" optional inputMode="numeric" value={balls} onChange={(e) => setBalls(e.target.value)} error={errors.balls} autoComplete="off" />
 
-        {drillChoices.length > 0 && (
-          <fieldset className="flex flex-col gap-2">
-            <legend className="mb-1.5 text-label text-ink">
-              Drills you did <span className="font-normal text-muted">(optional)</span>
-            </legend>
-            {drillChoices.map((d) => (
-              <Checkbox
-                key={d.id}
-                label={d.name}
-                description={d.where}
-                checked={done.includes(d.id)}
-                onChange={(e) => setDone((list) => (e.target.checked ? [...list, d.id] : list.filter((id) => id !== d.id)))}
+            {drillChoices.length > 0 && (
+              <fieldset className="flex flex-col gap-2">
+                <legend className="mb-1.5 text-label text-ink">
+                  Drills you did <span className="font-normal text-muted">(optional)</span>
+                </legend>
+                {drillChoices.map((d) => (
+                  <Checkbox
+                    key={d.id}
+                    label={d.name}
+                    description={d.where}
+                    checked={done.includes(d.id)}
+                    onChange={(e) => setDone((list) => (e.target.checked ? [...list, d.id] : list.filter((id) => id !== d.id)))}
+                  />
+                ))}
+              </fieldset>
+            )}
+
+            {challengeDef && (
+              <TextInput
+                label={`${challengeDef.name} score`}
+                optional
+                inputMode="numeric"
+                value={challenge}
+                onChange={(e) => setChallenge(e.target.value)}
+                error={errors.challenge}
+                hint={`Out of ${challengeDef.outOf}. Target: ${challengeDef.target}.`}
+                autoComplete="off"
               />
-            ))}
-          </fieldset>
-        )}
+            )}
 
-        {challengeDef && (
-          <TextInput
-            label={`${challengeDef.name} score`}
-            optional
-            inputMode="numeric"
-            value={challenge}
-            onChange={(e) => setChallenge(e.target.value)}
-            error={errors.challenge}
-            hint={`Out of ${challengeDef.outOf}. Target: ${challengeDef.target}.`}
-            autoComplete="off"
-          />
-        )}
+            <ChoiceGroup legend="How did it feel?" name="feel" columns={5} value={feel} onChange={setFeel} options={feelOptions} error={errors.feel} />
+            <TextArea label="Notes for next time" optional value={notes} onChange={(e) => setNotes(e.target.value)} placeholder="e.g. Lag putts felt good; short ones pushed right" maxLength={400} />
 
-        <ChoiceGroup legend="How did it feel?" name="feel" columns={5} value={feel} onChange={setFeel} options={feelOptions} error={errors.feel} />
-        <TextArea label="Notes for next time" optional value={notes} onChange={(e) => setNotes(e.target.value)} placeholder="e.g. Lag putts felt good; short ones pushed right" maxLength={400} />
-
-        <Button type="submit" size="lg" block>
-          Save session
-        </Button>
-      </form>
-    </div>
+            <Button type="submit" size="lg" block>
+              Save session
+            </Button>
+          </form>
+        </Column>
+      </Columns>
+    </Page>
   );
 }

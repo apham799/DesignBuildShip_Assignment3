@@ -75,13 +75,7 @@ export function TextInput({ label, hint, error, optional, className, id: idProp,
   const id = idProp ?? auto;
   return (
     <Field id={id} label={label} hint={hint} error={error} optional={optional}>
-      <input
-        id={id}
-        aria-invalid={error ? true : undefined}
-        aria-describedby={error || hint ? `${id}-msg` : undefined}
-        className={cx(control, "h-12 w-full", className)}
-        {...rest}
-      />
+      <input id={id} aria-invalid={error ? true : undefined} aria-describedby={error || hint ? `${id}-msg` : undefined} className={cx(control, "h-12 w-full", className)} {...rest} />
     </Field>
   );
 }
@@ -167,6 +161,14 @@ type ChoiceGroupProps = {
 
 const columnClass = { 2: "grid-cols-2", 3: "grid-cols-3", 4: "grid-cols-4", 5: "grid-cols-5" } as const;
 
+const tile = (error?: string) =>
+  cx(
+    "flex min-h-12 flex-col items-center justify-center rounded-md border-2 border-edge bg-surface px-2 py-2 text-center text-body font-semibold text-ink transition-colors",
+    "hover:border-ink peer-checked:border-green peer-checked:bg-green peer-checked:text-on-green peer-checked:shadow-card",
+    "peer-focus-visible:outline-3 peer-focus-visible:outline-offset-2 peer-focus-visible:outline-focus",
+    error && "border-error",
+  );
+
 // A radio group drawn as large tappable tiles. Native radios underneath, so arrow keys
 // move between options and screen readers announce "1 of 3".
 export function ChoiceGroup({ legend, name, options, value, onChange, hint, error, optional, columns = 3 }: ChoiceGroupProps) {
@@ -180,23 +182,8 @@ export function ChoiceGroup({ legend, name, options, value, onChange, hint, erro
       <div className={cx("grid gap-2", columnClass[columns])}>
         {options.map((o) => (
           <label key={o.value} className="relative block cursor-pointer">
-            <input
-              type="radio"
-              name={name}
-              value={o.value}
-              checked={value === o.value}
-              onChange={() => onChange(o.value)}
-              data-invalid={error ? true : undefined}
-              className="peer sr-only"
-            />
-            <span
-              className={cx(
-                "flex min-h-12 flex-col items-center justify-center rounded-md border-2 border-edge bg-surface px-2 py-2 text-center text-body font-semibold text-ink transition-colors",
-                "hover:border-ink peer-checked:border-green peer-checked:bg-green peer-checked:text-on-green peer-checked:shadow-card",
-                "peer-focus-visible:outline-3 peer-focus-visible:outline-offset-2 peer-focus-visible:outline-focus",
-                error && "border-error",
-              )}
-            >
+            <input type="radio" name={name} value={o.value} checked={value === o.value} onChange={() => onChange(o.value)} data-invalid={error ? true : undefined} className="peer sr-only" />
+            <span className={tile(error)}>
               {o.label}
               {o.description && <span className="text-label font-normal opacity-90">{o.description}</span>}
             </span>
@@ -205,6 +192,66 @@ export function ChoiceGroup({ legend, name, options, value, onChange, hint, erro
       </div>
       <FieldMessage id={msgId} error={error} hint={hint} />
     </fieldset>
+  );
+}
+
+type MultiChoiceGroupProps = Omit<ChoiceGroupProps, "value" | "onChange"> & {
+  value: string[];
+  onChange: (value: string[]) => void;
+  // Options that can't be combined with others, like "Not sure".
+  exclusive?: string[];
+};
+
+// The same tiles as ChoiceGroup, but checkboxes: pick any number. Selected values keep
+// the order they were picked in, so callers can treat the first as the lead.
+export function MultiChoiceGroup({ legend, name, options, value, onChange, hint, error, optional, columns = 3, exclusive = [] }: MultiChoiceGroupProps) {
+  const id = useId();
+  const msgId = `${id}-msg`;
+  const toggle = (v: string, on: boolean) => {
+    if (!on) return onChange(value.filter((x) => x !== v));
+    if (exclusive.includes(v)) return onChange([v]);
+    onChange([...value.filter((x) => !exclusive.includes(x)), v]);
+  };
+  return (
+    <fieldset className="flex flex-col gap-1.5" aria-describedby={error || hint ? msgId : undefined}>
+      <legend className="mb-1.5 text-label text-ink">
+        <LabelText label={legend} optional={optional} />
+      </legend>
+      <div className={cx("grid gap-2", columnClass[columns])}>
+        {options.map((o) => {
+          const checked = value.includes(o.value);
+          return (
+            <label key={o.value} className="relative block cursor-pointer">
+              <input
+                type="checkbox"
+                name={name}
+                value={o.value}
+                checked={checked}
+                onChange={(e) => toggle(o.value, e.target.checked)}
+                data-invalid={error ? true : undefined}
+                className="peer sr-only"
+              />
+              <span className={tile(error)}>
+                <span className="flex items-center gap-1.5">
+                  {checked && <CheckIcon />}
+                  {o.label}
+                </span>
+                {o.description && <span className="text-label font-normal opacity-90">{o.description}</span>}
+              </span>
+            </label>
+          );
+        })}
+      </div>
+      <FieldMessage id={msgId} error={error} hint={hint} />
+    </fieldset>
+  );
+}
+
+function CheckIcon() {
+  return (
+    <svg viewBox="0 0 16 16" className="size-4 shrink-0" aria-hidden fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M3.5 8.5 L6.5 11.5 L12.5 4.5" />
+    </svg>
   );
 }
 
@@ -256,7 +303,10 @@ export function Stepper({ label, value, onChange, min = 0, max = 99, hint, error
             if (!Number.isNaN(n) && n >= min && n <= max) onChange(n);
           }}
           onBlur={() => setDraft(null)}
-          className={cx(control, "h-11 w-14 min-w-0 px-1 text-center font-display text-2xl font-semibold [appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none")}
+          className={cx(
+            control,
+            "h-11 w-14 min-w-0 px-1 text-center font-display text-2xl font-semibold [appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none",
+          )}
         />
         <button type="button" className={stepButton} onClick={() => set(value + 1)} disabled={value >= max} aria-label={`Increase ${name}`} aria-controls={id}>
           +

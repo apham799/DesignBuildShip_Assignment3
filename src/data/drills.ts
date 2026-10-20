@@ -29,7 +29,11 @@ export const drills: Drill[] = [
     name: "Fairway gates",
     where: "Range",
     balls: 15,
-    steps: ["Pick two flags or signs about 30 yards apart as your fairway.", "Alternate driver and your next-longest club, full routine every ball.", "Say out loud where it finished: in, left, or right."],
+    steps: [
+      "Pick two flags or signs about 30 yards apart as your fairway.",
+      "Alternate driver and your next-longest club, full routine every ball.",
+      "Say out loud where it finished: in, left, or right.",
+    ],
   },
   {
     id: "stock-shot",
@@ -91,10 +95,26 @@ export const drills: Drill[] = [
 
 export const challenges: Record<Category | "mixed", Challenge> = {
   driving: { id: "fairway-finder", category: "driving", name: "Fairway finder", how: "10 drives at your fairway gates. Count how many finish inside.", outOf: 10, target: 6, balls: 10 },
-  approach: { id: "green-circle", category: "approach", name: "Green circle", how: "10 shots from mixed distances. Count how many finish within about 15 yards of the target, roughly a green.", outOf: 10, target: 5, balls: 10 },
+  approach: {
+    id: "green-circle",
+    category: "approach",
+    name: "Green circle",
+    how: "10 shots from mixed distances. Count how many finish within about 15 yards of the target, roughly a green.",
+    outOf: 10,
+    target: 5,
+    balls: 10,
+  },
   shortGame: { id: "save-nine", category: "shortGame", name: "Save nine", how: "Play the up-and-down nine. Count your saves.", outOf: 9, target: 3, balls: 9 },
   putting: { id: "twenty-threes", category: "putting", name: "Twenty threes", how: "20 putts from 3 feet, moving around the hole. Count the makes.", outOf: 20, target: 15, balls: 20 },
-  mixed: { id: "nine-hole-range", category: "mixed", name: "Nine-hole range round", how: "Play 9 imaginary holes: tee shot, then the approach that hole would leave. Count the greens you'd have hit.", outOf: 9, target: 3, balls: 18 },
+  mixed: {
+    id: "nine-hole-range",
+    category: "mixed",
+    name: "Nine-hole range round",
+    how: "Play 9 imaginary holes: tee shot, then the approach that hole would leave. Count the greens you'd have hit.",
+    outOf: 9,
+    target: 3,
+    balls: 18,
+  },
 };
 
 // Extra advice when the round showed a clear miss pattern.
@@ -128,6 +148,7 @@ export type PlanBlock = {
 
 export type PracticePlan = {
   focus: Category | "mixed";
+  also: Category[];
   minutes: 15 | 30 | 60;
   blocks: PlanBlock[];
   balls: number;
@@ -149,19 +170,26 @@ function warmup(focus: Category | "mixed", minutes: number): PlanBlock {
   };
 }
 
-export function buildPlan(focus: Category | "mixed", minutes: 15 | 30 | 60): PracticePlan {
+// `also`: extra areas to mix in. The first drill of each comes right after the
+// lead area's first drill; the challenge always belongs to the lead area.
+export function buildPlan(focus: Category | "mixed", minutes: 15 | 30 | 60, also: Category[] = []): PracticePlan {
   const time = split[minutes];
-  const pool = focus === "mixed" ? [drills.find((d) => d.id === "distance-ladder")!, drills.find((d) => d.id === "fairway-gates")!, drills.find((d) => d.id === "lag-ladder")!] : drills.filter((d) => d.category === focus);
-  // Short sessions get one drill; an hour gets two (three for a mixed bucket).
-  const count = minutes === 60 ? (focus === "mixed" ? 3 : 2) : 1;
+  const extra = focus === "mixed" ? [] : also.filter((c) => c !== focus);
+  const firstOf = (c: Category) => drills.find((d) => d.category === c)!;
+  const pool =
+    focus === "mixed"
+      ? [drills.find((d) => d.id === "distance-ladder")!, drills.find((d) => d.id === "fairway-gates")!, drills.find((d) => d.id === "lag-ladder")!]
+      : [firstOf(focus), ...extra.map(firstOf), ...drills.filter((d) => d.category === focus).slice(1)];
+  // Short sessions get one drill; longer ones get more, especially when mixing areas.
+  const count = minutes === 15 ? 1 : minutes === 30 ? (extra.length ? 2 : 1) : focus === "mixed" || extra.length ? 3 : 2;
   const chosen = pool.slice(0, count);
   const each = Math.round(time.drills / chosen.length);
 
   const challenge = challenges[focus];
   const blocks: PlanBlock[] = [
-    warmup(focus, time.warmup),
+    warmup(extra.length ? "mixed" : focus, time.warmup),
     ...chosen.map((d) => ({ kind: "drill" as const, title: d.name, minutes: each, where: d.where, balls: d.balls, steps: d.steps, drillId: d.id })),
     { kind: "challenge", title: challenge.name, minutes: time.challenge, balls: challenge.balls, steps: [challenge.how, `Target: ${challenge.target} of ${challenge.outOf}.`], challenge },
   ];
-  return { focus, minutes, blocks, balls: blocks.reduce((sum, b) => sum + (b.balls ?? 0), 0) };
+  return { focus, also: extra, minutes, blocks, balls: blocks.reduce((sum, b) => sum + (b.balls ?? 0), 0) };
 }

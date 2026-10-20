@@ -1,13 +1,15 @@
 "use client";
 
+import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useCallback } from "react";
-import { inProgressRound } from "@/lib/actions";
+import { inProgressRound, setChecklistDismissed } from "@/lib/actions";
 import { daysAgo, sessionsThisWeek, toPar } from "@/lib/format";
 import { lastFinishedRound, playedHoles, recommend, roundStats } from "@/lib/recommend";
 import { isSavingToMemoryOnly, useStore } from "@/lib/storage";
 import { categoryLabel, type Store } from "@/lib/types";
-import { Alert, Badge, ButtonLink, Card, LoadingCard, Ornament, TextLink, Toast } from "@/components/ui";
+import { Alert, Badge, ButtonLink, Card, Column, Columns, cx, LoadingCard, Page, TextLink, Toast } from "@/components/ui";
+import { Onboarding } from "./onboarding";
 
 const feelWord = ["", "Rough", "Meh", "OK", "Good", "Great"];
 
@@ -18,80 +20,109 @@ export function HomeScreen() {
   const clearSaved = useCallback(() => router.replace("/", { scroll: false }), [router]);
 
   if (!store) return <LoadingCard />;
-  const fresh = store.rounds.length === 0 && store.practice.length === 0;
+  const fresh = store.rounds.length === 0 && store.practice.length === 0 && !store.focus;
   const saved = params.get("saved") === "practice" ? `Practice saved · ${sessionsThisWeek(store.practice)} of ${store.weeklyGoal} this week` : null;
 
   return (
-    <>
+    <Page>
       {isSavingToMemoryOnly() && (
-        <div className="mb-6">
-          <Alert tone="warning" title="This browser isn't saving">
-            Your notes will last until you close this tab. Turn off private browsing to keep them.
-          </Alert>
-        </div>
+        <Alert tone="warning" title="This browser isn't saving">
+          Your notes will last until you close this tab. Turn off private browsing to keep them.
+        </Alert>
       )}
       {fresh ? <FirstVisit /> : <WelcomeBack store={store} />}
       <Toast message={saved} onDone={clearSaved} />
-    </>
+    </Page>
   );
 }
 
 function FirstVisit() {
   return (
-    <div className="flex flex-col gap-8">
-      <div className="flex flex-col gap-3">
-        <p className="text-label text-muted">Golf notes that remember for you</p>
-        <h1 className="text-display">Track a round. Get a practice plan.</h1>
-        <p className="text-body text-muted">Tap in each hole as you play. Bucket List finds what cost you the most strokes and turns it into your next range session.</p>
-      </div>
+    <Columns>
+      <Column span={7}>
+        <div className="flex flex-col gap-3">
+          <p className="text-label text-muted">Golf notes that remember for you</p>
+          <h1 className="text-display">Track a round. Get a practice plan.</h1>
+          <p className="max-w-2xl text-body text-muted">Tap in each hole as you play. Bucket List finds what cost you the most strokes and turns it into your next range session.</p>
+        </div>
+        <Onboarding />
+      </Column>
 
-      <div className="grid gap-4 sm:grid-cols-2">
-        <Card tone="green" as="section" labelledBy="playing" className="flex flex-col gap-3">
-          <h2 id="playing" className="text-heading">
-            Playing today?
+      <Column span={5} sticky>
+        <Card tone="cream" as="section" labelledBy="example" className="flex flex-col gap-3">
+          <Badge tone="brass">Example · after a round</Badge>
+          <h2 id="example" className="text-heading">
+            Where to focus: Putting
           </h2>
-          <p className="text-body opacity-95">Pick your course. Par, yards and handicap for every hole fill in for you.</p>
-          <ButtonLink href="/play" variant="secondary" className="mt-auto w-full border-white">
-            Start a round
-          </ButtonLink>
+          <p className="text-body">36 putts over 18 holes, with 4 three-putts. A bogey golfer takes about 34, so that cost you about 2 strokes.</p>
+          <div className="rounded-md border border-brass/50 bg-surface p-3">
+            <p className="text-label text-muted">Your 30-minute plan</p>
+            <p className="text-body">Warm up → Lag ladder → Twenty threes challenge (target 15 of 20)</p>
+          </div>
+          <p className="text-label font-normal text-muted">One thing to work on, with the reason, after every round.</p>
         </Card>
-        <Card as="section" labelledBy="range" className="flex flex-col gap-3">
-          <h2 id="range" className="text-heading">
-            At the range?
-          </h2>
-          <p className="text-body text-muted">A starter bucket of drills with a scored challenge at the end. No round needed.</p>
-          <ButtonLink href="/practice" className="mt-auto w-full">
-            Practice now
-          </ButtonLink>
-        </Card>
-      </div>
-
-      <Ornament />
-
-      <section aria-labelledby="how" className="flex flex-col gap-3">
-        <h2 id="how" className="text-heading">
-          How it works
-        </h2>
-        <ol className="flex flex-col gap-3 text-body">
-          {[
-            ["Play", "Score, putts, fairway and green on each hole: four taps."],
-            ["Focus", "The summary names the one area that cost you the most."],
-            ["Practice", "Take a 15, 30 or 60-minute plan to the range and log how it went."],
-          ].map(([title, body], i) => (
-            <li key={title} className="flex gap-3">
-              <span aria-hidden className="grid size-8 shrink-0 place-items-center rounded-full bg-cream font-display font-semibold text-green">
-                {i + 1}
-              </span>
-              <span>
-                <span className="font-semibold">{title}.</span> {body}
-              </span>
+        <ul className="flex flex-col gap-2 text-body">
+          {["No account. Everything is saved on this device.", "Course data fills in for you: no scorecard to type.", "Comes back to where you left off, mid-round or mid-week."].map((t) => (
+            <li key={t} className="flex gap-2">
+              <svg viewBox="0 0 16 16" className="mt-1 size-4 shrink-0 text-green" aria-hidden fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M3.5 8.5 L6.5 11.5 L12.5 4.5" />
+              </svg>
+              {t}
             </li>
           ))}
-        </ol>
-      </section>
+        </ul>
+      </Column>
+    </Columns>
+  );
+}
 
-      <p className="text-label font-normal text-muted">Saved on this device. No account needed.</p>
-    </div>
+function GettingStarted({ store }: { store: Store }) {
+  const lastRound = lastFinishedRound(store);
+  const steps = [
+    { label: "Play your first holes", done: store.rounds.some((r) => playedHoles(r).length > 0), href: "/play", action: "Start a round" },
+    { label: "Lock in a practice focus", done: Boolean(store.focus), href: lastRound ? `/round/${lastRound.id}/summary` : "/practice", action: lastRound ? "See your summary" : "Pick one" },
+    { label: "Log a practice session", done: store.practice.length > 0, href: "/practice", action: "Get a plan" },
+  ];
+  const doneCount = steps.filter((s) => s.done).length;
+  if (store.checklistDismissed || doneCount === steps.length) return null;
+
+  return (
+    <Card as="section" labelledBy="getting-started" className="flex flex-col gap-3">
+      <div className="flex items-baseline justify-between gap-3">
+        <h2 id="getting-started" className="text-heading">
+          Getting started
+        </h2>
+        <p className="text-label text-muted">
+          {doneCount} of {steps.length} done
+        </p>
+      </div>
+      <ol className="flex flex-col gap-2">
+        {steps.map((s, i) => (
+          <li key={s.label} className="flex items-center justify-between gap-3">
+            <span className="flex items-center gap-3">
+              <span
+                aria-hidden
+                className={cx("grid size-7 shrink-0 place-items-center rounded-full border-2 font-display text-sm", s.done ? "border-green bg-green text-on-green" : "border-edge text-ink")}
+              >
+                {s.done ? "✓" : i + 1}
+              </span>
+              <span className={cx("text-body", s.done && "text-muted line-through")}>
+                {s.label}
+                <span className="sr-only">{s.done ? " (done)" : " (to do)"}</span>
+              </span>
+            </span>
+            {!s.done && (
+              <Link href={s.href} className="shrink-0 text-label text-green underline decoration-green/40 decoration-2 underline-offset-[3px] hover:decoration-green">
+                {s.action}
+              </Link>
+            )}
+          </li>
+        ))}
+      </ol>
+      <button type="button" onClick={() => setChecklistDismissed(true)} className="w-fit rounded-sm text-label font-normal text-muted underline underline-offset-[3px] hover:text-ink">
+        Hide this
+      </button>
+    </Card>
   );
 }
 
@@ -106,62 +137,66 @@ function WelcomeBack({ store }: { store: Store }) {
   const since = [lastRound && `last round ${daysAgo(lastRound.startedAt)}`, lastPractice && `last practice ${daysAgo(lastPractice.date)}`].filter(Boolean).join(" · ");
 
   return (
-    <div className="flex flex-col gap-6">
-      <div className="flex flex-col gap-1">
-        <h1 className="text-display">Welcome back.</h1>
-        {since && <p className="text-body text-muted">{since.charAt(0).toUpperCase() + since.slice(1)}.</p>}
-      </div>
+    <Columns>
+      <Column span={7}>
+        <div className="flex flex-col gap-1">
+          <h1 className="text-display">Welcome back.</h1>
+          {since && <p className="text-body text-muted">{since.charAt(0).toUpperCase() + since.slice(1)}.</p>}
+        </div>
 
-      {current && (
-        <Card tone="green" as="section" labelledBy="resume" className="flex flex-col gap-3">
-          <h2 id="resume" className="text-heading">
-            Round in progress
-          </h2>
-          <p className="text-body">
-            {current.courseName}, hole {current.currentHole} of {current.holes.length}
-            {playedHoles(current).length > 0 && ` · ${toPar(roundStats(current).strokes, roundStats(current).par)} through ${playedHoles(current).length}`}
-          </p>
-          <ButtonLink href={`/round/${current.id}/hole/${current.currentHole}`} variant="secondary" className="w-fit border-white">
-            Resume on hole {current.currentHole}
-          </ButtonLink>
-        </Card>
-      )}
+        {current && (
+          <Card tone="green" as="section" labelledBy="resume" className="flex flex-col gap-3">
+            <h2 id="resume" className="text-heading">
+              Round in progress
+            </h2>
+            <p className="text-body">
+              {current.courseName}, hole {current.currentHole} of {current.holes.length}
+              {playedHoles(current).length > 0 && ` · ${toPar(roundStats(current).strokes, roundStats(current).par)} through ${playedHoles(current).length}`}
+            </p>
+            <ButtonLink href={`/round/${current.id}/hole/${current.currentHole}`} variant="secondary" className="w-fit border-white">
+              Resume on hole {current.currentHole}
+            </ButtonLink>
+          </Card>
+        )}
 
-      {store.focus ? (
-        <Card tone="cream" as="section" labelledBy="focus" className="flex flex-col gap-3">
-          <Badge tone="brass">Your focus</Badge>
-          <h2 id="focus" className="text-display">
-            {categoryLabel[store.focus.category]}
-          </h2>
-          <p className="text-body">{store.focus.reason}</p>
-          <ButtonLink href="/practice" className="w-fit">
-            Today&rsquo;s practice plan
-          </ButtonLink>
-        </Card>
-      ) : suggestion ? (
-        <Card tone="cream" as="section" labelledBy="focus" className="flex flex-col gap-3">
-          <Badge tone="brass">From your last round</Badge>
-          <h2 id="focus" className="text-display">
-            {categoryLabel[suggestion.top.category]}
-          </h2>
-          <p className="text-body">{suggestion.top.reason}</p>
-          <ButtonLink href={`/round/${lastRound!.id}/summary`} className="w-fit">
-            See the summary and lock it in
-          </ButtonLink>
-        </Card>
-      ) : (
-        <Card tone="cream" as="section" labelledBy="focus" className="flex flex-col gap-3">
-          <h2 id="focus" className="text-heading">
-            Play a round to find your focus
-          </h2>
-          <p className="text-body">Until then, the starter bucket covers a bit of everything.</p>
-          <ButtonLink href="/play" className="w-fit">
-            Start a round
-          </ButtonLink>
-        </Card>
-      )}
+        {store.focus ? (
+          <Card tone="cream" as="section" labelledBy="focus" className="flex flex-col gap-3">
+            <Badge tone="brass">Your focus</Badge>
+            <h2 id="focus" className="text-display">
+              {[store.focus.category, ...(store.focus.also ?? [])].map((c) => categoryLabel[c]).join(" + ")}
+            </h2>
+            <p className="text-body">{store.focus.reason}</p>
+            <ButtonLink href="/practice" className="w-fit">
+              Today&rsquo;s practice plan
+            </ButtonLink>
+          </Card>
+        ) : suggestion ? (
+          <Card tone="cream" as="section" labelledBy="focus" className="flex flex-col gap-3">
+            <Badge tone="brass">From your last round</Badge>
+            <h2 id="focus" className="text-display">
+              {categoryLabel[suggestion.top.category]}
+            </h2>
+            <p className="text-body">{suggestion.top.reason}</p>
+            <ButtonLink href={`/round/${lastRound!.id}/summary`} className="w-fit">
+              See the summary and lock it in
+            </ButtonLink>
+          </Card>
+        ) : (
+          <Card tone="cream" as="section" labelledBy="focus" className="flex flex-col gap-3">
+            <h2 id="focus" className="text-heading">
+              Play a round to find your focus
+            </h2>
+            <p className="text-body">Until then, the starter bucket covers a bit of everything.</p>
+            <ButtonLink href="/play" className="w-fit">
+              Start a round
+            </ButtonLink>
+          </Card>
+        )}
 
-      <div className="grid gap-4 sm:grid-cols-2">
+        <GettingStarted store={store} />
+      </Column>
+
+      <Column span={5} className="lg:pt-2">
         <Card as="section" labelledBy="week" className="flex flex-col gap-3">
           <h2 id="week" className="text-heading">
             This week
@@ -171,7 +206,7 @@ function WelcomeBack({ store }: { store: Store }) {
           </p>
           <div aria-hidden className="flex gap-1.5">
             {Array.from({ length: Math.max(goal, thisWeek) }, (_, i) => (
-              <span key={i} className={`h-2 flex-1 rounded-full ${i < thisWeek ? "bg-green" : "bg-cream-deep"}`} />
+              <span key={i} className={cx("h-2 flex-1 rounded-full", i < thisWeek ? "bg-green" : "bg-cream-deep")} />
             ))}
           </div>
           <p className="text-label font-normal text-muted">{thisWeek >= goal ? "Goal met. Anything more is a bonus." : "Weeks start on Monday."}</p>
@@ -184,12 +219,16 @@ function WelcomeBack({ store }: { store: Store }) {
           {lastPractice ? (
             <>
               <p className="text-label font-normal text-muted">
-                {daysAgo(lastPractice.date)} · {lastPractice.focus === "mixed" ? "Mixed bucket" : categoryLabel[lastPractice.focus]} · {lastPractice.minutes} min · felt {feelWord[lastPractice.feel].toLowerCase()}
+                {daysAgo(lastPractice.date)} · {lastPractice.focus === "mixed" ? "Mixed bucket" : categoryLabel[lastPractice.focus]} · {lastPractice.minutes} min · felt{" "}
+                {feelWord[lastPractice.feel].toLowerCase()}
               </p>
               {lastPractice.notes ? <blockquote className="border-l-4 border-brass pl-3 text-body">{lastPractice.notes}</blockquote> : <p className="text-body text-muted">No notes that time.</p>}
               {lastPractice.challengeScore !== undefined && (
                 <p className="text-body">
-                  Challenge: <span className="font-semibold">{lastPractice.challengeScore} of {lastPractice.challengeOutOf}</span>
+                  Challenge:{" "}
+                  <span className="font-semibold">
+                    {lastPractice.challengeScore} of {lastPractice.challengeOutOf}
+                  </span>
                 </p>
               )}
             </>
@@ -200,17 +239,17 @@ function WelcomeBack({ store }: { store: Store }) {
             </>
           )}
         </Card>
-      </div>
 
-      <div className="flex flex-wrap gap-3">
-        {!current && <ButtonLink href="/play">Start a round</ButtonLink>}
-        <ButtonLink href="/practice/log" variant="secondary">
-          Log practice
-        </ButtonLink>
-        <ButtonLink href="/history" variant="ghost">
-          History
-        </ButtonLink>
-      </div>
-    </div>
+        <div className="flex flex-wrap gap-3">
+          {!current && <ButtonLink href="/play">Start a round</ButtonLink>}
+          <ButtonLink href="/practice/log" variant="secondary">
+            Log practice
+          </ButtonLink>
+          <ButtonLink href="/history" variant="ghost">
+            History
+          </ButtonLink>
+        </div>
+      </Column>
+    </Columns>
   );
 }

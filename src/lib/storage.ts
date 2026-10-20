@@ -11,7 +11,7 @@ import type { Store } from "./types";
 export const STORAGE_KEY = "bucket-list:v1";
 
 export function emptyStore(): Store {
-  return { version: 1, rounds: [], practice: [], focus: null, holeNotes: {}, customCourses: [], weeklyGoal: 2 };
+  return { version: 1, rounds: [], practice: [], focus: null, holeNotes: {}, customCourses: [], weeklyGoal: 2, seenTips: [], checklistDismissed: false };
 }
 
 let cache: { raw: string | null; value: Store } | null = null;
@@ -61,6 +61,16 @@ function write(next: Store) {
 
 export function update(change: (store: Store) => Store) {
   write(change(read()));
+}
+
+// Erases everything saved on this device, as if visiting for the first time.
+export function resetStore() {
+  try {
+    localStorage.removeItem(STORAGE_KEY);
+  } catch {}
+  cache = null;
+  if (memory) memory = emptyStore();
+  listeners.forEach((l) => l());
 }
 
 // True when saves aren't reaching localStorage, so the UI can warn.

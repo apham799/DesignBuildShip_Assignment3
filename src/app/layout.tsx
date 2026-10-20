@@ -1,6 +1,7 @@
 import type { Metadata, Viewport } from "next";
 import { Fraunces, Libre_Franklin } from "next/font/google";
 import { Suspense } from "react";
+import { DeviceMenu } from "@/components/device-menu";
 import { AppNav, NavBar } from "@/components/ui";
 import "./globals.css";
 
@@ -30,18 +31,16 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
   return (
     <html lang="en" className={`${fraunces.variable} ${franklin.variable} antialiased`}>
       <body className="min-h-dvh bg-page text-ink">
-        <a
-          href="#main"
-          className="sr-only z-50 rounded-md bg-green px-4 py-3 font-semibold text-on-green focus:not-sr-only focus:fixed focus:left-4 focus:top-4"
-        >
+        <a href="#main" className="sr-only z-50 rounded-md bg-green px-4 py-3 font-semibold text-on-green focus:not-sr-only focus:fixed focus:left-4 focus:top-4">
           Skip to content
         </a>
         <Suspense fallback={<NavBar path={null} />}>
           <AppNav />
         </Suspense>
-        <main id="main" className="mx-auto w-full max-w-3xl px-4 pb-28 pt-6 sm:pb-12 sm:pt-10">
+        <main id="main" className="mx-auto w-full max-w-[90rem] px-4 pb-28 pt-6 sm:px-6 sm:pb-12 sm:pt-10 lg:px-12">
           {children}
         </main>
+        <DeviceMenu />
       </body>
     </html>
   );

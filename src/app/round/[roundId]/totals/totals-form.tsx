@@ -6,7 +6,7 @@ import { saveTotals } from "@/lib/actions";
 import { hasErrors, wholeNumber, type Errors } from "@/lib/forms";
 import { playedHoles } from "@/lib/recommend";
 import type { Round } from "@/lib/types";
-import { Alert, Button, ChoiceGroup, focusFirstError, PageHeader, TextInput } from "@/components/ui";
+import { Alert, Button, Card, ChoiceGroup, Column, Columns, focusFirstError, Page, PageHeader, TextInput } from "@/components/ui";
 import { RoundGate } from "../round-gate";
 
 type Field = "strokes" | "putts" | "fairways" | "greens" | "penalties";
@@ -89,43 +89,66 @@ function TotalsForm({ round }: { round: Round }) {
   const errorCount = Object.values(errors).filter(Boolean).length;
 
   return (
-    <div className="flex flex-col gap-6">
-      <PageHeader
-        title="Enter your totals"
-        step={round.courseName}
-        back={{ href: `/round/${round.id}/hole/${round.currentHole}`, label: `Back to hole ${round.currentHole}` }}
-        description="For when you didn't track every hole. You'll still get a practice focus."
-      />
-      {tracked > 0 && <Alert title={`You tracked ${tracked} ${tracked === 1 ? "hole" : "holes"} one by one`}>Saving totals replaces those holes with these numbers.</Alert>}
-      {errorCount > 1 && (
-        <Alert tone="error" title={`${errorCount} fields need fixing`}>
-          Each one says what to change.
-        </Alert>
-      )}
-
-      <form ref={formRef} noValidate onSubmit={submit} className="flex max-w-md flex-col gap-5">
-        {round.holes.length === 18 && (
-          <ChoiceGroup
-            legend="Holes played"
-            name="holes"
-            columns={2}
-            value={holeCount}
-            onChange={setHoleCount}
-            options={[
-              { value: "9", label: "Front 9", description: `Par ${round.holes.slice(0, 9).reduce((s, h) => s + h.par, 0)}` },
-              { value: "18", label: "All 18", description: `Par ${round.holes.reduce((s, h) => s + h.par, 0)}` },
-            ]}
+    <Page>
+      <Columns>
+        <Column span={5}>
+          <PageHeader
+            title="Enter your totals"
+            step={round.courseName}
+            back={{ href: `/round/${round.id}/hole/${round.currentHole}`, label: `Back to hole ${round.currentHole}` }}
+            description="For when you didn't track every hole. You'll still get a practice focus."
           />
-        )}
-        <TextInput label="Total score" hint={`Par is ${par}.`} {...field("strokes")} />
-        <TextInput label="Total putts" {...field("putts")} />
-        <TextInput label="Fairways hit" optional hint={`Out of ${fairwaysPossible} par 4s and 5s.`} {...field("fairways")} />
-        <TextInput label="Greens in regulation" optional hint={`Out of ${n} holes.`} {...field("greens")} />
-        <TextInput label="Penalty strokes" optional {...field("penalties")} />
-        <Button type="submit" size="lg" block>
-          Save round
-        </Button>
-      </form>
-    </div>
+          <Card tone="cream" className="hidden flex-col gap-2 lg:flex">
+            <h2 className="text-heading">What counts</h2>
+            <dl className="flex flex-col gap-2 text-body">
+              <div>
+                <dt className="font-semibold">Fairway hit</dt>
+                <dd>Your tee shot on a par 4 or 5 finished in the fairway.</dd>
+              </div>
+              <div>
+                <dt className="font-semibold">Green in regulation</dt>
+                <dd>On the green in par minus two: 1 shot on a par 3, 2 on a par 4, 3 on a par 5.</dd>
+              </div>
+              <div>
+                <dt className="font-semibold">Penalty strokes</dt>
+                <dd>Out of bounds, water, lost ball, unplayable lie.</dd>
+              </div>
+            </dl>
+          </Card>
+        </Column>
+        <Column span={7}>
+          {tracked > 0 && <Alert title={`You tracked ${tracked} ${tracked === 1 ? "hole" : "holes"} one by one`}>Saving totals replaces those holes with these numbers.</Alert>}
+          {errorCount > 1 && (
+            <Alert tone="error" title={`${errorCount} fields need fixing`}>
+              Each one says what to change.
+            </Alert>
+          )}
+
+          <form ref={formRef} noValidate onSubmit={submit} className="flex max-w-xl flex-col gap-5">
+            {round.holes.length === 18 && (
+              <ChoiceGroup
+                legend="Holes played"
+                name="holes"
+                columns={2}
+                value={holeCount}
+                onChange={setHoleCount}
+                options={[
+                  { value: "9", label: "Front 9", description: `Par ${round.holes.slice(0, 9).reduce((s, h) => s + h.par, 0)}` },
+                  { value: "18", label: "All 18", description: `Par ${round.holes.reduce((s, h) => s + h.par, 0)}` },
+                ]}
+              />
+            )}
+            <TextInput label="Total score" hint={`Par is ${par}.`} {...field("strokes")} />
+            <TextInput label="Total putts" {...field("putts")} />
+            <TextInput label="Fairways hit" optional hint={`Out of ${fairwaysPossible} par 4s and 5s.`} {...field("fairways")} />
+            <TextInput label="Greens in regulation" optional hint={`Out of ${n} holes.`} {...field("greens")} />
+            <TextInput label="Penalty strokes" optional {...field("penalties")} />
+            <Button type="submit" size="lg" block>
+              Save round
+            </Button>
+          </form>
+        </Column>
+      </Columns>
+    </Page>
   );
 }

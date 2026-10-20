@@ -1,5 +1,7 @@
 "use client";
 
+import { challenges, drills } from "@/data/drills";
+import { recommend } from "./recommend";
 import { newId, update } from "./storage";
 import type { Category, Course, HoleScore, Par, PracticeSession, Round, RoundTotals, Store } from "./types";
 
@@ -110,9 +112,7 @@ export function setCustomPar(courseId: string, roundId: string, number: number, 
       ...r,
       holes: r.holes.map((h) => (h.number === number ? { ...h, par, strokes: h.played ? h.strokes : par, fairway: par === 3 ? undefined : h.fairway } : h)),
     })),
-    customCourses: s.customCourses.map((c) =>
-      c.id === courseId ? { ...c, holes: c.holes.map((h) => (h.number === number ? { ...h, par } : h)) } : c,
-    ),
+    customCourses: s.customCourses.map((c) => (c.id === courseId ? { ...c, holes: c.holes.map((h) => (h.number === number ? { ...h, par } : h)) } : c)),
   }));
 }
 
@@ -126,8 +126,8 @@ export function deleteCustomCourse(courseId: string) {
 
 // ---- Focus and practice ----
 
-export function lockFocus(category: Category, reason: string, fromRoundId?: string) {
-  update((s) => ({ ...s, focus: { category, reason, lockedAt: now(), fromRoundId } }));
+export function lockFocus(category: Category, reason: string, fromRoundId?: string, also?: Category[]) {
+  update((s) => ({ ...s, focus: { category, also: also?.length ? also : undefined, reason, lockedAt: now(), fromRoundId } }));
 }
 
 export function clearFocus() {
@@ -142,4 +142,86 @@ export function logPractice(session: Omit<PracticeSession, "id">): string {
 
 export function setWeeklyGoal(goal: number) {
   update((s) => ({ ...s, weeklyGoal: goal }));
+}
+
+// ---- Onboarding ----
+
+export function dismissTip(id: string) {
+  update((s) => (s.seenTips.includes(id) ? s : { ...s, seenTips: [...s.seenTips, id] }));
+}
+
+export function setChecklistDismissed(dismissed: boolean) {
+  update((s) => ({ ...s, checklistDismissed: dismissed }));
+}
+
+// ---- Sample data, to preview the welcome-back experience without playing ----
+
+const daysBefore = (days: number, hour = 9) => {
+  const d = new Date();
+  d.setDate(d.getDate() - days);
+  d.setHours(hour, 0, 0, 0);
+  return d.toISOString();
+};
+
+export function loadSampleWeek(course: Course) {
+  const tee = course.tees[0];
+  // A believable bogey-ish nine: a few three-putts, approaches missing short.
+  const extra = [1, 2, 0, 1, 2, 1, 0, 2, 1];
+  const putts = [2, 3, 2, 2, 3, 2, 1, 3, 2];
+  const fairway: (HoleScore["fairway"] | undefined)[] = ["hit", "right", undefined, "hit", "right", "hit", undefined, "left", "hit"];
+  const green: (HoleScore["green"] | undefined)[] = [undefined, "short", "hit", "short", undefined, "short", "hit", undefined, "left"];
+  const roundId = newId();
+  const holes: HoleScore[] = course.holes.slice(0, 9).map((h, i) => ({
+    number: h.number,
+    par: h.par,
+    handicap: h.handicap,
+    yards: h.yards[tee.id] || undefined,
+    strokes: h.par + extra[i],
+    putts: putts[i],
+    fairway: h.par === 3 ? undefined : fairway[i],
+    green: green[i],
+    penalties: i === 4 ? 1 : 0,
+    note: i === 1 ? "Tee shot drifts right; aim at the left bunker." : undefined,
+    played: true,
+  }));
+  const round: Round = {
+    id: roundId,
+    courseId: course.id,
+    courseName: course.name,
+    teeId: tee.id,
+    teeName: tee.name,
+    startedAt: daysBefore(4, 8),
+    finishedAt: daysBefore(4, 10),
+    mode: "holes",
+    holes,
+    currentHole: 9,
+  };
+  const top = recommend(round)?.top;
+  const category = top?.category ?? "putting";
+  const challenge = challenges[category];
+  update((s) => ({
+    ...s,
+    rounds: [round, ...s.rounds],
+    focus: top ? { category, reason: top.reason, lockedAt: daysBefore(4, 11), fromRoundId: roundId } : s.focus,
+    practice: [
+      {
+        id: newId(),
+        date: daysBefore(1, 18),
+        focus: category,
+        minutes: 30,
+        drillIds: drills
+          .filter((d) => d.category === category)
+          .slice(0, 1)
+          .map((d) => d.id),
+        challengeId: challenge.id,
+        challengeScore: Math.max(0, challenge.target - 2),
+        challengeOutOf: challenge.outOf,
+        feel: 3,
+        notes: category === "putting" ? "Lag putts felt good. Short ones pushed right; keep the head still." : "Contact was solid early, faded when I rushed. Slow down between balls.",
+      },
+      ...s.practice,
+    ],
+    holeNotes: { ...s.holeNotes, [course.id]: { ...(s.holeNotes[course.id] ?? {}), 2: { text: "Tee shot drifts right; aim at the left bunker.", roundId, updatedAt: daysBefore(4, 9) } } },
+    seenTips: Array.from(new Set([...s.seenTips, "hole", "summary", "practice"])),
+  }));
 }

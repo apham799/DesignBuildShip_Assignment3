@@ -1,22 +1,7 @@
 "use client";
 
 import { useRef, useState } from "react";
-import {
-  Alert,
-  Badge,
-  Button,
-  Card,
-  Checkbox,
-  ChoiceGroup,
-  focusFirstError,
-  LoadingCard,
-  Select,
-  Stat,
-  Stepper,
-  TextArea,
-  TextInput,
-  Toast,
-} from "@/components/ui";
+import { Alert, Badge, Button, Card, Checkbox, ChoiceGroup, focusFirstError, LoadingCard, Select, Stat, Stepper, TextArea, TextInput, Toast } from "@/components/ui";
 
 function Section({ title, children }: { title: string; children: React.ReactNode }) {
   return (
@@ -95,14 +80,7 @@ export function Showcase() {
             setToast(`Saved ${name.trim()}`);
           }}
         >
-          <TextInput
-            label="Course name"
-            value={name}
-            onChange={(e) => setName(e.target.value)}
-            error={nameError}
-            hint="As it appears on the scorecard."
-            autoComplete="off"
-          />
+          <TextInput label="Course name" value={name} onChange={(e) => setName(e.target.value)} error={nameError} hint="As it appears on the scorecard." autoComplete="off" />
           <Stepper label="Score" value={score} onChange={setScore} min={1} max={15} />
           <ChoiceGroup
             legend="Fairway"

@@ -81,7 +81,7 @@ export function NavBar({ path }: { path: string | null }) {
   return (
     <>
       <header className="sticky top-0 z-20 border-b border-cream-deep bg-cream/95 backdrop-blur">
-        <div className="mx-auto flex h-16 max-w-3xl items-center justify-between px-4">
+        <div className="mx-auto flex h-16 max-w-[90rem] items-center justify-between px-4 sm:px-6 lg:px-12">
           <BrandMark />
           <nav aria-label="Main" className="hidden sm:block">
             <ul className="flex gap-1">
@@ -92,10 +92,7 @@ export function NavBar({ path }: { path: string | null }) {
                     <Link
                       href={t.href}
                       aria-current={active ? "page" : undefined}
-                      className={cx(
-                        "flex h-10 items-center rounded-md px-3 text-body font-semibold transition-colors",
-                        active ? "bg-green text-on-green" : "text-ink hover:bg-cream-deep",
-                      )}
+                      className={cx("flex h-10 items-center rounded-md px-3 text-body font-semibold transition-colors", active ? "bg-green text-on-green" : "text-ink hover:bg-cream-deep")}
                     >
                       {t.label}
                     </Link>
@@ -158,7 +155,7 @@ export function PageHeader({ title, back, step, description, action }: PageHeade
         </div>
         {action}
       </div>
-      {description && <div className="text-body text-muted">{description}</div>}
+      {description && <div className="max-w-2xl text-body text-muted">{description}</div>}
     </div>
   );
 }
