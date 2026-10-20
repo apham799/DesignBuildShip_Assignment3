@@ -130,9 +130,12 @@ flowchart TD
   wb --> inprog{"Round in progress?"}
   inprog -- "Yes" --> resume["Resume · Hole 7 at Jackson Park"]
   resume --> hole(["Go to Hole n"])
-  wb --> focus["Focus card<br/>Putting cost roughly 3 strokes last round"]
+  wb --> focus["Focus card · the latest round since you locked it in<br/>2.3 → 1.9 putts a hole · 3 sessions since<br/>Today's practice plan · Change focus"]
   focus --> plan(["Go to Practice plan<br/>challenge shows your level and the next one"])
-  wb --> streakc["Practice streak · weeks in a row at the goal<br/>each session rolls the putt closer; the goal holes it<br/>8-week dots · one mulligan a month"]
+  focus --> moveon{"Focus costs under a stroke now,<br/>or another area costs more?"}
+  moveon -- "Yes" --> switch["Switch to approach<br/>or pick a new area"]
+  switch --> refocus[("New focus saved")]
+  wb --> streakc["Practice streak · weeks in a row at your goal<br/>goal: 1–4 sessions a week, starts at 1 · Change goal<br/>each session rolls the putt closer; the goal holes it<br/>8-week dots · one mulligan a month"]
   wb --> bucket["Your bucket list · latest badges<br/>10 of 20 earned · up next: 3 to go for"]
   bucket --> list["/bucket-list · Trophy case (new badges unlock)<br/>Still on your list · challenge medals"]
   wb --> checklist["Getting started<br/>ticks itself off · Hide this"]
@@ -234,7 +237,19 @@ It finished with 3 rounds and 3 sessions in History and 12 of 20 badges, with no
 - It doesn't say up front that the courses are Chicago-only.
 - The Reset button is an unlabelled icon on phones.
 
-**Changes made from this feedback:** _(filled in below as they're made)_
+**Changes made from this feedback:**
+1. **Focus card and plan header follow the latest round.** They now show what the newest round says about the focus ("Latest round, Cog Hill: 2.3 → 1.9 putts a hole, roughly 4 strokes back") and how many sessions you've logged since locking it in. The original reason stays under "Why this plan".
+2. **The weekly goal is yours.** It starts at 1 session a week, and **Change goal** on the streak card sets it from 1 to 4. With a goal of 1, the same three weeks show a 3-week streak.
+3. **A way out of a focus.** When the focus costs less than a stroke, or another area costs clearly more, Home and the plan say so and offer **Switch to approach** (or to pick a new area). **Change focus** is now on Home, always visible on the plan, and on the summary ("Pick a new focus" when nothing stood out).
+4. **Smaller fixes:**
+   - The summary reads "Your tees", not "Your tees tees".
+   - Custom courses no longer show made-up handicaps.
+   - "Delete this course" is folded into a closed **Manage this course** section, away from Start.
+   - A putting-only log hides "Range balls hit" and lists the plan's drills first, with "Show 1 more" for the rest.
+   - The first visit and the course list say up front that the built-in courses are five Chicago public courses.
+   - The corner Reset button shows its label on phones.
+
+Not changed yet: celebrations during a round and the tips that don't retire on their own (items 4 and 5).
 
 ## Running locally
 

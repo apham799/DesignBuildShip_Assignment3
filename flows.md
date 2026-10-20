@@ -123,9 +123,12 @@ flowchart TD
   wb --> inprog{"Round in progress?"}
   inprog -- "Yes" --> resume["Resume · Hole 7 at Jackson Park"]
   resume --> hole(["Go to Hole n"])
-  wb --> focus["Focus card<br/>Putting cost roughly 3 strokes last round"]
+  wb --> focus["Focus card · the latest round since you locked it in<br/>2.3 → 1.9 putts a hole · 3 sessions since<br/>Today's practice plan · Change focus"]
   focus --> plan(["Go to Practice plan<br/>challenge shows your level and the next one"])
-  wb --> streakc["Practice streak · weeks in a row at the goal<br/>each session rolls the putt closer; the goal holes it<br/>8-week dots · one mulligan a month"]
+  focus --> moveon{"Focus costs under a stroke now,<br/>or another area costs more?"}
+  moveon -- "Yes" --> switch["Switch to approach<br/>or pick a new area"]
+  switch --> refocus[("New focus saved")]
+  wb --> streakc["Practice streak · weeks in a row at your goal<br/>goal: 1–4 sessions a week, starts at 1 · Change goal<br/>each session rolls the putt closer; the goal holes it<br/>8-week dots · one mulligan a month"]
   wb --> bucket["Your bucket list · latest badges<br/>10 of 20 earned · up next: 3 to go for"]
   bucket --> list["/bucket-list · Trophy case (new badges unlock)<br/>Still on your list · challenge medals"]
   wb --> checklist["Getting started<br/>ticks itself off · Hide this"]
@@ -183,3 +186,5 @@ I asked the agent what steps, states and errors it would add, then chose which t
 | Practice → round payoff | Shows whether practice showed up in the next round, which closes the loop the app is built on |
 | Celebrations at the top of the page | New achievements and level-ups get a moment, without covering inputs; announced to screen readers |
 | Badges and a trophy case | A checklist didn't read as accomplishments: each goal is now a medallion badge that unlocks with a pop, shine and sparkles, and earned ones live in a Trophy case (latest ones on Home) |
+| Focus card follows the latest round | First-run feedback: the card quoted the round that set the focus, rounds later. It now shows progress since you locked it in, and offers to switch when the focus stops costing strokes |
+| Weekly goal you choose, starting at 1 | First-run feedback: a fixed goal of 2 kept the streak at 0 for someone practising weekly |
