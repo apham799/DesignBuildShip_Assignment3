@@ -87,7 +87,9 @@ export function PracticeLogScreen() {
   const plan = readPlan(params);
   const draft = store.practiceDraft;
   const use = choice?.query === query ? choice.use : null;
-  const draftMatchesPlan = Boolean(draft && plan && draft.focus === plan.focus && draft.plannedMinutes === plan.minutes);
+  // Started on this same link (e.g. you changed the focus a moment ago): it's this session.
+  const draftIsThisSession = Boolean(draft && draft.startedFrom === query);
+  const draftMatchesPlan = Boolean(draft && plan && (draftIsThisSession || (draft.focus === plan.focus && draft.plannedMinutes === plan.minutes)));
 
   // A draft and a different plan: ask which one to log.
   if (draft && plan && !draftMatchesPlan && !use) {
@@ -128,6 +130,7 @@ export function PracticeLogScreen() {
     <PracticeLogForm
       key={`${query}-${use ?? ""}`}
       mode={{ kind: "new", source, savedAt: resumeDraft ? draft!.savedAt : undefined }}
+      startedFrom={query}
       initial={initial}
       store={store}
       onStartOver={() => {
@@ -140,8 +143,8 @@ export function PracticeLogScreen() {
 
 type Mode = { kind: "edit"; session: PracticeSession } | { kind: "new"; source: "draft" | "plan" | "blank"; savedAt?: string };
 
-function PracticeLogForm(props: { mode: Mode; initial: Values; store: Store; onStartOver?: () => void }) {
-  const { store, onStartOver } = props;
+function PracticeLogForm(props: { mode: Mode; initial: Values; store: Store; onStartOver?: () => void; startedFrom?: string }) {
+  const { store, onStartOver, startedFrom } = props;
   // Fixed when the form opens: saving the draft while typing must not change where it came from.
   const [{ mode, initial }] = useState(() => ({ mode: props.mode, initial: props.initial }));
   const router = useRouter();
@@ -154,7 +157,7 @@ function PracticeLogForm(props: { mode: Mode; initial: Values; store: Store; onS
   const change = (patch: Partial<Values>) => {
     const next = { ...v, ...patch };
     setV(next);
-    if (!editing) savePracticeDraft({ ...next, savedAt: new Date().toISOString() });
+    if (!editing) savePracticeDraft({ ...next, startedFrom, savedAt: new Date().toISOString() });
   };
 
   const challengeDef = v.focus ? challenges[v.focus] : undefined;

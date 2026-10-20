@@ -110,6 +110,9 @@ export type PracticeDraft = {
   focus?: Category | "mixed";
   also: Category[];
   plannedMinutes?: number; // the plan it was started from, if any
+  // The log link (its query string) this draft was started on. A draft started on the
+  // current link is the one being edited, never an "unfinished log" to choose from.
+  startedFrom?: string;
   minutes: string;
   balls: string;
   drillIds: string[];
