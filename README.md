@@ -46,7 +46,7 @@ flowchart TD
   setup --> round(["Go to Play a round"])
   all --> round
 
-  home -- "At the range" --> leak["What usually costs you strokes?<br/>pick any · first pick leads · or Not sure"]
+  home -- "At the range" --> leak["What costs you the most strokes?<br/>biggest one (or Not sure) + anything else"]
   leak --> ready["Your first plan is ready<br/>a drill from each pick + a scored challenge"]
   ready -- "Open my plan" --> focus[("Focus saved")]
   focus --> plan(["Go to Practice"])
@@ -93,21 +93,29 @@ flowchart TD
 ```mermaid
 flowchart TD
   start(["/practice"]) --> has{"Focus locked?"}
-  has -- "No" --> ask["Want a plan built for your game?<br/>starter bucket shown meanwhile"]
-  ask -- "Build my plan, nothing picked" --> aerr["! Choose at least one area,<br/>or a bit of everything."]
-  aerr --> ask
-  ask -- "pick one or more areas" --> fsaved[("Focus saved")]
+  has -- "No" --> starter["Starter bucket · a bit of everything<br/>Tailor it to your game (folded)"]
+  starter -. Tailor it .-> pick["Main focus (one)<br/>+ Also include (optional)"]
+  pick -- "Build my plan, no main focus" --> aerr["! Choose a main focus,<br/>or a bit of everything."]
+  aerr --> pick
+  pick -- "Build my plan" --> fsaved[("Focus saved")]
   fsaved --> plan
-  has -- "Yes" --> plan["Why this plan + plan for your focus<br/>warm-up → drills → challenge with target and your best"]
-  plan -. Change focus .-> ask
-  plan --> time["Pick time · 15 / 30 / 60 min"]
-  time --> range["At the range"]
-  range --> log["/practice/log<br/>focus · minutes · balls · drills · challenge score · feel · notes"]
-  log -- "missing or out of range" --> perr["! Choose what you worked on.<br/>Enter a challenge score from 0 to 20.<br/>input kept, focus moves to the first error"]
+  starter --> time
+  has -- "Yes" --> plan["Putting + Approach · your pick<br/>Why this plan (folded) · Change focus"]
+  plan -. Change focus .-> pick
+  plan --> time["Pick time · 15 / 30 / 60 min<br/>Bring: range balls + balls for the green"]
+  time --> range["At the range<br/>each drill: repeat until time is up"]
+  range --> open["Done? Log this session"]
+  open --> draft{"Unfinished draft<br/>from a different plan?"}
+  draft -- "Yes" --> choose["Resume your draft<br/>or Log this plan"]
+  choose --> log
+  draft -- "Same plan" --> resumed["Draft picked up · Start over"]
+  resumed --> log
+  draft -- "No draft" --> log["/practice/log<br/>prefilled from the plan, saved as a draft as you type"]
+  log -- "missing or out of range" --> perr["! Error under the field<br/>input kept, focus moves to the first error"]
   perr --> log
   log -- "change what you worked on" --> clear["Old challenge score and its error cleared"]
   clear --> log
-  log --> saved[("Session saved")]
+  log --> saved[("Session saved, draft cleared")]
   saved --> toast["Saved · 1 of 2 this week"]
   toast --> home(["Home"])
 ```
@@ -125,7 +133,7 @@ flowchart TD
   wb --> checklist["Getting started<br/>play holes → lock a focus → log practice<br/>ticks itself off · Hide this"]
   wb --> note["Last practice note<br/>lag putts good, short ones pushed right"]
   wb --> goal["Weekly goal · 1 of 2 sessions"]
-  wb --> hist["/history · rounds + practice sessions<br/>download my data"]
+  wb --> hist["/history · rounds + practice sessions<br/>Edit · Delete on each · download my data"]
   wb --> again["Play the same course again"]
   again --> notes["Hole screens show your notes<br/>custom pars already filled in"]
 
