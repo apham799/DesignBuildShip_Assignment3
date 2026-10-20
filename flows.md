@@ -4,12 +4,14 @@
 
 > I tap in each hole as I play → the summary shows what cost me the most strokes → next time I'm at the range it gives me a plan for that → I log how practice went, and it's all waiting when I come back.
 
-Each box with a route (`/play`, `/practice/log`, …) is its own page in the app. Rounded boxes link to another diagram. Cylinders are writes to `localStorage`.
+Each box with a route (`/play`, `/practice/log`, …) is its own page in the app. Rounded boxes link to another diagram. Cylinders are writes to `localStorage`. Dotted lines are one-time or optional extras.
 
 ## Overview: the loop
 
 ```mermaid
 flowchart LR
+  S(["First visit<br/>pick a path"]) --> A
+  S --> D
   A["Play a round<br/>tap in each hole"] --> B["Round summary<br/>biggest leak"]
   B --> C["Lock in<br/>practice focus"]
   C --> D["Practice plan<br/>at the range"]
@@ -19,18 +21,33 @@ flowchart LR
   F --> D
 ```
 
-## 1 · First visit (nothing saved)
+## 1 · First visit (nothing saved): the onboarding
+
+No tour and no setup wall: one question, then the thing you came to do, right on the home page.
 
 ```mermaid
 flowchart TD
   open(["Open Bucket List"]) --> check{"Anything saved<br/>on this device?"}
   check -- "Yes" --> back(["Go to Coming back"])
-  check -- "No" --> home["/ · Home, first visit<br/>Track a round. Get a practice plan."]
-  home --> play["Start a round"]
-  home --> starter["Practice now<br/>starter range plan, no stats needed"]
-  play --> round(["Go to Play a round"])
-  starter --> plan["/practice · 15 / 30 / 60 min"]
-  plan --> log(["Go to Log practice"])
+  check -- "No" --> home["/ · Home, first visit<br/>What brings you here today?"]
+
+  home -- "Playing today" --> courses["Pick your course<br/>3 courses right on Home"]
+  courses -- "loading fails" --> cerr["Couldn't load courses<br/>Try again"]
+  cerr --> courses
+  courses --> setup["/play/course/[id]<br/>tees + 9 or 18"]
+  courses -- "Somewhere else?" --> all["/play<br/>all courses or add your own"]
+  setup --> round(["Go to Play a round"])
+  all --> round
+
+  home -- "At the range" --> leak["What usually costs you strokes?<br/>pick any · first pick leads · or Not sure"]
+  leak --> ready["Your first plan is ready<br/>a drill from each pick + a scored challenge"]
+  ready -- "Open my plan" --> focus[("Focus saved")]
+  focus --> plan(["Go to Practice"])
+
+  home -- "Just looking" --> try["Try a hole<br/>score a sample par 4, nothing saved"]
+  try --> insight["What Bucket List would tell you<br/>changes as you tap"]
+  insight -- "Start a real round" --> all
+  insight -- "Get a practice plan" --> plan
 ```
 
 ## 2 · Core task: play a round → get a focus
@@ -42,21 +59,25 @@ flowchart TD
   lerr --> loading
   loading --> list["Course list<br/>sample courses + Your courses"]
   list -- "search finds nothing" --> empty["No match<br/>Course not listed?"]
-  empty --> custom["Name your course<br/>every hole starts at par 4"]
-  custom -- "name left blank" --> cerr["! Enter the course name.<br/>typed text kept"]
+  empty --> custom["/play/new · Name your course<br/>every hole starts at par 4"]
+  custom -- "name blank or already used" --> cerr["! Enter the course name.<br/>typed text kept"]
   cerr --> custom
-  list --> tee["Choose tee + 9 or 18 holes"]
+  list --> tee["/play/course/[id]<br/>tees + 9 or 18 holes"]
   custom --> tee
-  tee --> hole["/play/[round]/hole/[n]<br/>par, yards, your note from last time<br/>score · putts · fairway · green"]
+  tee --> hole["/round/[id]/hole/[n]<br/>par · yards · handicap on one line, last time's note<br/>score · putts · tee shot · green"]
+  hole -. first time only .-> tip1["One-line tip · Got it"]
   hole -- "every change" --> autosave[("Saved on this device")]
   hole -- "edit par on a custom course" --> cc[("Custom course updated")]
-  hole -- "Next hole" --> hole
-  hole -- "Enter totals instead" --> totals["/play/[round]/totals<br/>score · putts · fairways · greens · penalties"]
+  hole -- "Next hole, or tap any hole in the strip" --> hole
+  hole -- "Enter totals instead" --> totals["/round/[id]/totals<br/>score · putts · fairways · greens · penalties"]
   totals -- "putts more than score, etc." --> terr["! Error under the field<br/>says what to fix, input kept"]
   terr --> totals
-  hole -- "last hole, or Finish early after 6+" --> summary["/play/[round]/summary<br/>score vs par + biggest leak and why"]
+  totals -- "switch front 9 / all 18" --> recheck["Errors on screen are rechecked<br/>against the new hole count"]
+  recheck --> totals
+  hole -- "last hole, or Finish early after 6+" --> summary["/round/[id]/summary<br/>score vs par + one place to focus, and why"]
   totals --> summary
-  summary -- "Lock in as practice focus" --> focus[("Focus saved")]
+  summary -. first time only .-> tip2["Tip: one thing to work on"]
+  summary -- "Lock it in" --> focus[("Focus saved")]
   focus --> plan(["Go to Practice"])
 ```
 
@@ -64,13 +85,23 @@ flowchart TD
 
 ```mermaid
 flowchart TD
-  plan["/practice · Plan for your focus<br/>warm-up → drill → challenge + target"] --> time["Pick time · 15 / 30 / 60 min"]
+  start(["/practice"]) --> has{"Focus locked?"}
+  has -- "No" --> ask["Want a plan built for your game?<br/>starter bucket shown meanwhile"]
+  ask -- "Build my plan, nothing picked" --> aerr["! Choose at least one area,<br/>or a bit of everything."]
+  aerr --> ask
+  ask -- "pick one or more areas" --> fsaved[("Focus saved")]
+  fsaved --> plan
+  has -- "Yes" --> plan["Why this plan + plan for your focus<br/>warm-up → drills → challenge with target and your best"]
+  plan -. Change focus .-> ask
+  plan --> time["Pick time · 15 / 30 / 60 min"]
   time --> range["At the range"]
   range --> log["/practice/log<br/>focus · minutes · balls · drills · challenge score · feel · notes"]
-  log -- "no focus chosen / score out of range" --> perr["! Choose what you worked on.<br/>Enter a challenge score from 0 to 30.<br/>input kept"]
+  log -- "missing or out of range" --> perr["! Choose what you worked on.<br/>Enter a challenge score from 0 to 20.<br/>input kept, focus moves to the first error"]
   perr --> log
+  log -- "change what you worked on" --> clear["Old challenge score and its error cleared"]
+  clear --> log
   log --> saved[("Session saved")]
-  saved --> toast["Saved · goal 1 of 2 this week"]
+  saved --> toast["Saved · 1 of 2 this week"]
   toast --> home(["Home"])
 ```
 
@@ -84,11 +115,17 @@ flowchart TD
   resume --> hole(["Go to Hole n"])
   wb --> focus["Focus card<br/>Putting cost about 3 strokes last round"]
   focus --> plan(["Go to Practice plan"])
+  wb --> checklist["Getting started<br/>play holes → lock a focus → log practice<br/>ticks itself off · Hide this"]
   wb --> note["Last practice note<br/>lag putts good, short ones pushed right"]
   wb --> goal["Weekly goal · 1 of 2 sessions"]
-  wb --> hist["/history · rounds + practice sessions"]
+  wb --> hist["/history · rounds + practice sessions<br/>download my data"]
   wb --> again["Play the same course again"]
   again --> notes["Hole screens show your notes<br/>custom pars already filled in"]
+
+  menu["Top bar · Reset"] -- "Reset to a first visit" --> erase[("Device data erased")]
+  erase --> first(["First visit again"])
+  menu -- "Load a sample week" --> sample[("Sample round, focus and practice")]
+  sample --> wb
 ```
 
 ## Steps, states, and errors added while planning with the agent
@@ -104,7 +141,20 @@ I asked the agent what steps, states and errors it would add, then chose which t
 | Finish early after 6+ holes | From Arccos: you still get a useful summary from a partial round |
 | Green prefilled from score − putts; fairway hidden on par 3s | From 18Birdies: fewer taps per hole |
 | Totals fallback with cross-field errors | For when you forgot to track hole by hole |
-| Practice-now starter plan on the first visit | From Break X: value before you've logged anything |
 | Weekly goal instead of a daily streak | A forgiving reason to return, not guilt |
 | Hole notes from last time on the hole screen | Course memory: the reason to open it on the course again |
-| JSON export on History *(stretch)* | localStorage can be cleared, so give people a way out |
+| JSON export on History | localStorage can be cleared, so give people a way out |
+
+### Added after the first build, from my feedback
+
+| Added | Why |
+|---|---|
+| Three-path first visit (playing / at the range / just looking) | "How it works" text wasn't real onboarding. Each path does something useful right away instead |
+| At the range: pick every area that costs you strokes | One leak is rarely the whole story. The first pick leads, drills mix in from the rest, and "Not sure" stays exclusive |
+| Just looking: try a sample hole | From 18Birdies' "preview from the couch": see the advice before committing to a round. Nothing is saved |
+| Getting-started checklist | Guides the first week (play → focus → practice) and checks itself off from what you actually did |
+| One-time tips on the hole, summary and practice screens | Explain each screen once, in place, instead of a tour up front |
+| Practice with no focus asks you to pick one | "Why this plan" made no sense when nothing had been chosen |
+| Errors recheck when a field they depend on changes | Switching focus or 9/18 holes left messages quoting the old limits |
+| Reset menu in the top bar (reset / sample week) | Lets me test the first visit and the return visit without clearing the browser by hand |
+| Compact hole screen | Simplicity: course facts on one line and fewer hints, so Next fits on a phone screen |
