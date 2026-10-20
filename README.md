@@ -6,7 +6,7 @@ Bucket List is a small golf tool for two rhythms: the weekend round and the week
 
 > I tap in each hole as I play → the summary shows what cost me the most strokes → next time I'm at the range it gives me a plan for that → I log how practice went, and it's all waiting when I come back.
 
-- **Live:** _coming soon (Vercel)_
+- **Live:** https://design-build-ship-assignment3-chi.vercel.app/
 - **Stack:** Next.js, Tailwind CSS and `localStorage`. No accounts, database or external APIs. The course "database" is sample data bundled with the app.
 
 ## Flows
@@ -203,7 +203,38 @@ Checked with the agent on Oct 20, at phone (390px) and desktop (1440px) widths.
 
 ## First-run check
 
-_To be filled in after deploy: an agent tries the live site as a brand-new user, and its usability feedback and the resulting changes go here._
+**How it was run (Oct 20).** The agent used the live site (https://design-build-ship-assignment3-chi.vercel.app/) in a fresh browser at phone size, as a brand-new golfer, for three cycles of *round → summary → practice focus → practice plan → log*. It simulated coming back a week later between cycles by moving saved dates back 7 days:
+
+1. **First visit:** "Playing today" → Jackson Park (front 9) → 45 (+10), 21 putts → focus **Putting** ("roughly 4 strokes") → 30-minute putting plan → logged 11 of 20.
+2. **A week later:** searched "Cog Hill" (not listed) → **Add "Cog Hill" as your course** → set the pars while playing → 45 (+9) → payoff "2.3 → 2.0 putts a hole" → 60-minute plan → logged 15 (Silver medal).
+3. **Another week later:** Cog Hill listed under **Your courses**, pars remembered, hole 3 showed "Last time here: Plays a club longer than the card says." → 40 (+4) → payoff "2.3 → 1.9 putts a hole, roughly 4 strokes back".
+
+It finished with 3 rounds and 3 sessions in History and 12 of 20 badges, with no errors. A separate agent that had never seen the code then reviewed all 37 screenshots and the step log as a first-time user.
+
+**What worked:**
+- The first screen is useful immediately, with one question and three paths.
+- Hole entry is fast, and the green fills itself in.
+- The diagnosis is plain English: "21 putts… a bogey golfer takes about 17".
+- The unlisted-course path has no dead end, and the course remembers its pars and hole notes.
+- The practice payoff links practice to results.
+- The log form is clean, and History has edit, delete and export.
+
+**Usability feedback, ranked by the reviewer:**
+1. **The focus card looks frozen.** Home and the plan header still quote the first round three rounds later, which reads as "it isn't reading my new rounds". The card should show the latest round, or progress since the focus was locked in.
+2. **The streak never grows.** It stayed at 0 weeks after practising once every week, because the default goal is 2 a week and can't be changed. The goal should be chosen by the user, defaulting to 1.
+3. **No way out of a focus.** Round 3 said "Nothing stood out", but putting stayed locked. The app should offer a new focus once you beat the benchmark, and show "Change focus" everywhere.
+4. **Celebrations get in the way:** the new-course badge stayed on screen during the round, and summaries opened behind 3–4 stacked badges. There should be no banners mid-round, and new badges should be grouped into one card.
+5. **Tips never go away**, and the summary's "< History" back link is confusing just after finishing a round.
+
+**Smaller items:**
+- A typo: "Your tees tees".
+- Custom courses show made-up hole handicaps.
+- "Delete this course" is too close to "Start on hole 1".
+- The log form offers "Range balls" and drills that weren't in a putting plan.
+- It doesn't say up front that the courses are Chicago-only.
+- The Reset button is an unlabelled icon on phones.
+
+**Changes made from this feedback:** _(filled in below as they're made)_
 
 ## Running locally
 
