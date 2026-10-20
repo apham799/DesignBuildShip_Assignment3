@@ -206,12 +206,12 @@ function WelcomeBack({ store }: { store: Store }) {
           </Card>
         )}
 
+        <BucketListCard store={store} />
         <GettingStarted store={store} />
       </Column>
 
       <Column span={5} className="lg:pt-2">
         <StreakCard store={store} />
-        <BucketListCard store={store} />
 
         <Card as="section" labelledBy="last-practice" className="flex flex-col gap-2">
           <h2 id="last-practice" className="text-heading">
