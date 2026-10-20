@@ -2,23 +2,25 @@
 
 import Link from "next/link";
 import { useEffect } from "react";
-import { challengeById, levelLabel, levelOrder } from "@/data/drills";
+import { Badge } from "@/components/badges";
+import { challengeById, levelLabel, levelOrder, type Level } from "@/data/drills";
 import { achievementById, achievements, bestLevels } from "@/lib/progress";
 import { update, useStore } from "@/lib/storage";
 import type { Store } from "@/lib/types";
 import { Button } from "@/components/ui";
 
-type Pending = { key: string; at: string; title: string; detail: string; kind: "achievement" | "level" };
+type Pending = { key: string; at: string; title: string; detail: string; kind: "achievement" | "level"; id: string; level?: Level };
 
 function pending(store: Store): Pending[] {
   const out: Pending[] = [];
   for (const [id, u] of Object.entries(store.unlocked)) {
     const a = achievementById(id);
-    if (a && !u.seen) out.push({ key: `a:${id}`, at: u.at, title: a.title, detail: a.how, kind: "achievement" });
+    if (a && !u.seen) out.push({ key: `a:${id}`, at: u.at, title: a.title, detail: a.how, kind: "achievement", id });
   }
   for (const [id, l] of Object.entries(store.levels)) {
     const c = challengeById(id);
-    if (c && !l.seen) out.push({ key: `l:${id}`, at: l.at, title: `${c.name}: ${levelLabel[l.level]}`, detail: `You scored ${c.levels[l.level]} or more of ${c.outOf}.`, kind: "level" });
+    if (c && !l.seen)
+      out.push({ key: `l:${id}`, at: l.at, title: `${c.name}: ${levelLabel[l.level]}`, detail: `You scored ${c.levels[l.level]} or more of ${c.outOf}.`, kind: "level", id, level: l.level });
   }
   return out.sort((a, b) => a.at.localeCompare(b.at));
 }
@@ -56,13 +58,14 @@ export function Celebrations() {
   return (
     <div role="status" aria-live="polite" className="empty:hidden">
       {current && (
-        <section aria-label="Celebration" className="mb-6 flex items-start gap-3 rounded-lg border-2 border-brass bg-cream p-4 shadow-lift motion-safe:animate-[celebrate_400ms_ease-out]">
-          <svg viewBox="0 0 24 24" className="mt-0.5 size-7 shrink-0 text-green" aria-hidden fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-            <path d="M7 21 V3 L17 7 L7 11" fill="currentColor" fillOpacity="0.15" />
-            <path d="M4 21 H12" />
-          </svg>
+        <section
+          key={current.key}
+          aria-label="Celebration"
+          className="mb-6 flex items-center gap-4 rounded-lg border-2 border-brass bg-cream p-4 shadow-lift motion-safe:animate-[celebrate_400ms_ease-out]"
+        >
+          <Badge id={current.id} level={current.level} earned size="lg" animate />
           <div className="flex flex-1 flex-col gap-1">
-            <p className="text-label text-muted">{current.kind === "level" ? "Level up" : "Crossed off your bucket list"}</p>
+            <p className="text-label text-muted">{current.kind === "level" ? "New medal" : "Badge earned · crossed off your bucket list"}</p>
             <p className="text-heading">{current.title}</p>
             <p className="text-body">{current.detail}</p>
             {queue.length > 1 && <p className="text-label font-normal text-muted">And {queue.length - 1} more to celebrate.</p>}

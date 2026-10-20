@@ -147,4 +147,6 @@ export type Store = {
   // Where the streak putt was last shown (week start + sessions), so the ball only
   // rolls for new progress.
   streakSeen: { week: string; sessions: number } | null;
+  // Last time the trophy case was opened: badges earned after it unlock there with a "New" tag.
+  trophyCaseViewedAt: string | null;
 };

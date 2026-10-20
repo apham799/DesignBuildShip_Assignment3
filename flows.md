@@ -126,8 +126,8 @@ flowchart TD
   wb --> focus["Focus card<br/>Putting cost roughly 3 strokes last round"]
   focus --> plan(["Go to Practice plan<br/>challenge shows your level and the next one"])
   wb --> streakc["Practice streak · weeks in a row at the goal<br/>each session rolls the putt closer; the goal holes it<br/>8-week dots · one mulligan a month"]
-  wb --> bucket["Your bucket list · 10 of 20 crossed off<br/>up next: 3 to go for"]
-  bucket --> list["/bucket-list · rounds, practice, habits<br/>+ Bronze / Silver / Gold challenge levels"]
+  wb --> bucket["Your bucket list · latest badges<br/>10 of 20 earned · up next: 3 to go for"]
+  bucket --> list["/bucket-list · Trophy case (new badges unlock)<br/>Still on your list · challenge medals"]
   wb --> checklist["Getting started<br/>ticks itself off · Hide this"]
   wb --> note["Last practice note"]
   wb --> hist["/history · Edit · Delete · download my data"]
@@ -182,3 +182,4 @@ I asked the agent what steps, states and errors it would add, then chose which t
 | Bronze / Silver / Gold challenge levels | From Break X: every session has a next level to beat |
 | Practice → round payoff | Shows whether practice showed up in the next round, which closes the loop the app is built on |
 | Celebrations at the top of the page | New achievements and level-ups get a moment, without covering inputs; announced to screen readers |
+| Badges and a trophy case | A checklist didn't read as accomplishments: each goal is now a medallion badge that unlocks with a pop, shine and sparkles, and earned ones live in a Trophy case (latest ones on Home) |

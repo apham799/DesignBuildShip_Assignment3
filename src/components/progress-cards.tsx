@@ -4,6 +4,7 @@ import Link from "next/link";
 import { achievements, crossedOff, streak, upNext } from "@/lib/progress";
 import type { Store } from "@/lib/types";
 import { Card, cx } from "@/components/ui";
+import { Badge } from "./badges";
 import { PuttingGreen } from "./putting-green";
 
 const dotStyle = {
@@ -53,9 +54,11 @@ export function StreakCard({ store }: { store: Store }) {
   );
 }
 
-// Progress on the golf bucket list, with the next few to go for.
+// Progress on the golf bucket list: the latest badges earned, and the next few to go for.
 export function BucketListCard({ store }: { store: Store }) {
-  const done = crossedOff(store).length;
+  const earned = crossedOff(store).sort((a, b) => (store.unlocked[b.id]?.at ?? "").localeCompare(store.unlocked[a.id]?.at ?? ""));
+  const done = earned.length;
+  const recent = earned.slice(0, 4); // one row on a phone
   const next = upNext(store, 3);
   return (
     <Card as="section" labelledBy="bucket" className="flex flex-col gap-3">
@@ -64,19 +67,33 @@ export function BucketListCard({ store }: { store: Store }) {
           Your bucket list
         </h2>
         <p className="text-label text-muted">
-          {done} of {achievements.length} crossed off
+          {done} of {achievements.length} badges
         </p>
       </div>
       <div aria-hidden className="h-2 overflow-hidden rounded-full bg-cream-deep">
         <div className="h-full rounded-full bg-green" style={{ width: `${(done / achievements.length) * 100}%` }} />
       </div>
+      {recent.length > 0 && (
+        <>
+          <p className="text-label text-muted">Latest badges</p>
+          <ul className="flex flex-wrap items-end gap-3">
+            {recent.map((a) => (
+              <li key={a.id} className="flex w-16 flex-col items-center gap-1 text-center">
+                <Badge id={a.id} earned size="sm" />
+                <span className="text-[0.75rem] font-semibold leading-tight text-ink">{a.title}</span>
+              </li>
+            ))}
+            {done > recent.length && <li className="flex h-10 items-center text-label text-muted">+{done - recent.length} more</li>}
+          </ul>
+        </>
+      )}
       {next.length > 0 && (
         <>
           <p className="text-label text-muted">Up next</p>
           <ul className="flex flex-col gap-2">
             {next.map((a) => (
               <li key={a.id} className="flex gap-2 text-body">
-                <span aria-hidden className="mt-1.5 size-3 shrink-0 rounded-full border-2 border-edge" />
+                <Badge id={a.id} earned={false} size="xs" />
                 <span>
                   <span className="font-semibold">{a.title}</span> · {a.how}
                 </span>
@@ -86,7 +103,7 @@ export function BucketListCard({ store }: { store: Store }) {
         </>
       )}
       <Link href="/bucket-list" className="w-fit text-body font-semibold text-green underline decoration-green/40 decoration-2 underline-offset-[3px] hover:decoration-green">
-        See the whole list
+        Open your trophy case
       </Link>
     </Card>
   );

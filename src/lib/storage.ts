@@ -25,6 +25,7 @@ export function emptyStore(): Store {
     unlocked: {},
     levels: {},
     streakSeen: null,
+    trophyCaseViewedAt: null,
   };
 }
 
