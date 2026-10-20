@@ -1,16 +1,14 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useRef } from "react";
+import { useEffect, useId, useRef, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { finishRound, goToHole, saveHoleNote, setCustomPar, updateHole } from "@/lib/actions";
 
 import { playedHoles, roundStats } from "@/lib/recommend";
 import type { FairwayResult, GreenResult, HoleScore, Par, Round } from "@/lib/types";
-import { Alert, Button, ChoiceGroup, Column, Columns, cx, Page, PageHeader, Stepper, TextArea, TextLink, Tip, ToPar } from "@/components/ui";
+import { Alert, Button, ChoiceGroup, Column, Columns, cx, Page, PageHeader, Stepper, TextArea, TextLink, Tip, ToPar, useFocusSwap } from "@/components/ui";
 import { RoundGate } from "../../round-gate";
-
-const FINISH_EARLY_AFTER = 6;
 
 export function HoleScreen() {
   const { n } = useParams<{ n: string }>();
@@ -85,6 +83,34 @@ function Scorecard({ round, current }: { round: Round; current: number }) {
   );
 }
 
+// Rounds get cut short (weather, daylight, a call from work). Any hole can end the round,
+// with one confirm step so a stray tap doesn't.
+function EndRound({ holeNumber, holesPlayed, onEnd }: { holeNumber: number; holesPlayed: number; onEnd: () => void }) {
+  const [confirming, setConfirming] = useState(false);
+  const { whenOpen, whenClosed } = useFocusSwap(confirming);
+  const questionId = useId();
+  if (confirming) {
+    return (
+      <div role="group" aria-labelledby={questionId} className="flex flex-col gap-3 rounded-lg border border-rule p-4">
+        <p id={questionId} className="text-body">
+          End the round after hole {holeNumber}? You&rsquo;ll get a summary for the {holesPlayed} {holesPlayed === 1 ? "hole" : "holes"} you played, and you can still edit them later.
+        </p>
+        <div className="flex flex-wrap gap-3">
+          <Button onClick={onEnd}>End and log round</Button>
+          <Button ref={whenOpen} variant="ghost" onClick={() => setConfirming(false)}>
+            Keep playing
+          </Button>
+        </div>
+      </div>
+    );
+  }
+  return (
+    <Button ref={whenClosed} variant="secondary" onClick={() => setConfirming(true)}>
+      End round after this hole
+    </Button>
+  );
+}
+
 function HoleForm({ round, hole }: { round: Round; hole: HoleScore }) {
   // A specific tab title, so screen readers hear which hole after each navigation. Set
   // again on the next frame, after Next.js applies the page's static "Hole" title.
@@ -104,7 +130,6 @@ function HoleForm({ round, hole }: { round: Round; hole: HoleScore }) {
   const played = playedHoles(round);
   // Counting this hole too, since finishing marks it played.
   const playedWithThis = played.some((h) => h.number === hole.number) ? played.length : played.length + 1;
-  const canFinishEarly = !isLast && playedWithThis >= FINISH_EARLY_AFTER;
 
   const inferredHit = hole.strokes - hole.putts <= hole.par - 2;
   const greenValue = hole.green ?? (inferredHit ? "hit" : undefined);
@@ -253,14 +278,7 @@ function HoleForm({ round, hole }: { round: Round; hole: HoleScore }) {
 
         <Column span={5} className="lg:col-start-1 lg:row-start-2">
           <div className="flex flex-col gap-3 border-t border-rule pt-4">
-            {!isLast &&
-              (canFinishEarly ? (
-                <Button variant="secondary" onClick={finish}>
-                  Finish after this hole
-                </Button>
-              ) : (
-                <p className="text-label font-normal text-muted">Finish early unlocks after {FINISH_EARLY_AFTER} holes.</p>
-              ))}
+            {!isLast && !round.finishedAt && <EndRound holeNumber={hole.number} holesPlayed={playedWithThis} onEnd={finish} />}
             {round.finishedAt ? (
               <p className="text-body">
                 Editing a finished round. <TextLink href={`/round/${round.id}/summary`}>Back to the summary</TextLink>

@@ -81,7 +81,7 @@ flowchart TD
   terr --> totals
   totals -- "switch front 9 / all 18" --> recheck["Errors on screen are rechecked<br/>against the new hole count"]
   recheck --> totals
-  hole -- "last hole, or Finish early after 6+" --> summary["/round/[id]/summary<br/>score vs par + one place to focus, and why"]
+  hole -- "last hole, or End round after any hole (confirm first)" --> summary["/round/[id]/summary<br/>score vs par + one place to focus, and why"]
   totals --> summary
   summary -. first time only .-> tip2["Tip: one thing to work on"]
   summary -- "Lock it in" --> focus[("Focus saved")]

@@ -107,7 +107,10 @@ function Summary({ round, store }: { round: Round; store: Store }) {
                   Next closest: {categoryLabel[rec.runnerUp.category]} ({roughStrokes(rec.runnerUp.strokes)}).
                 </p>
               )}
-              <p className="text-label font-normal text-muted">Estimated from your score, putts and hits compared with a bogey golfer. Not shot-by-shot data.</p>
+              <p className="text-label font-normal text-muted">
+                {stats.holes < 6 && `Based on ${stats.holes} ${stats.holes === 1 ? "hole" : "holes"}, so treat this focus as a first hint. `}
+                Estimated from your score, putts and hits compared with a bogey golfer. Not shot-by-shot data.
+              </p>
               <div className="mt-1 flex flex-col gap-3 sm:flex-row">
                 {lockedHere || sameFocus ? (
                   <>

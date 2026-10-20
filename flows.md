@@ -74,7 +74,7 @@ flowchart TD
   terr --> totals
   totals -- "switch front 9 / all 18" --> recheck["Errors on screen are rechecked<br/>against the new hole count"]
   recheck --> totals
-  hole -- "last hole, or Finish early after 6+" --> summary["/round/[id]/summary<br/>score vs par + one place to focus, and why"]
+  hole -- "last hole, or End round after any hole (confirm first)" --> summary["/round/[id]/summary<br/>score vs par + one place to focus, and why"]
   totals --> summary
   summary -. first time only .-> tip2["Tip: one thing to work on"]
   summary -- "Lock it in" --> focus[("Focus saved")]
@@ -146,7 +146,7 @@ I asked the agent what steps, states and errors it would add, then chose which t
 | Search empty state → "Course not listed" | No dead ends when your course isn't in the list |
 | Custom courses | Pars you set for an unlisted course are saved and reused next time |
 | Autosave every hole + Resume card | Phones die mid-round, and the round can't be lost |
-| Finish early after 6+ holes | From Arccos: you still get a useful summary from a partial round |
+| Finish early (first after 6+ holes, now after any hole) | From Arccos: you still get a useful summary from a partial round |
 | Green prefilled from score − putts; fairway hidden on par 3s | From 18Birdies: fewer taps per hole |
 | Totals fallback with cross-field errors | For when you forgot to track hole by hole |
 | Weekly goal instead of a daily streak | A forgiving reason to return, not guilt |
@@ -171,3 +171,4 @@ I asked the agent what steps, states and errors it would add, then chose which t
 | Drills say how to fill their time; minutes add up | "Repeat the ladder until time is up" instead of a fixed count that didn't match the minutes |
 | "Bring:" instead of a ball count | Range balls get used up; putting and chipping reuse a few balls |
 | Edit and Delete in History | Fixing a mistyped score or note matters more than another dashboard card |
+| End round after any hole | Rounds get cut short (weather, daylight, a call). One confirm step stops stray taps, and summaries under 6 holes say they're a first hint |
