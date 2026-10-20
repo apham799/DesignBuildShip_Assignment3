@@ -8,7 +8,7 @@ import { daysAgo } from "@/lib/format";
 import { lastFinishedRound } from "@/lib/recommend";
 import { useStore } from "@/lib/storage";
 import { categoryLabel, type Category } from "@/lib/types";
-import { Badge, Button, ButtonLink, Card, ChoiceGroup, Column, Columns, LoadingCard, MultiChoiceGroup, Page, PageHeader, TextLink, Tip, useFocusSwap } from "@/components/ui";
+import { Badge, Button, ButtonLink, ChoiceGroup, Column, Columns, LoadingCard, MultiChoiceGroup, Page, PageHeader, TextLink, Tip, useFocusSwap } from "@/components/ui";
 
 type Minutes = 15 | 30 | 60;
 
@@ -118,48 +118,66 @@ function LevelLine({ challenge, history }: { challenge: Challenge; history: Retu
   );
 }
 
-function BlockCard({ block, index, history }: { block: PlanBlock; index: number; history?: ReturnType<typeof challengeBest> }) {
+// One block of the plan, folded by default so the plan reads at a glance: what's next and
+// for how long. Opening it shows the steps and how to fill the time. Native <details>, so
+// keyboards and screen readers get expand/collapse for free.
+function BlockCard({ block, index, history, open, onToggle }: { block: PlanBlock; index: number; history?: ReturnType<typeof challengeBest>; open: boolean; onToggle: (open: boolean) => void }) {
   return (
-    <Card className="flex h-full flex-col gap-2">
-      <div className="flex items-baseline justify-between gap-3">
-        <p className="text-label text-muted">
-          {index + 1} · {kindLabel[block.kind]} · {block.where}
-          {block.rangeBalls ? (
-            <>
-              {" · "}
-              <span aria-hidden>~</span>
-              <span className="sr-only">about </span>
-              {block.rangeBalls} balls
-            </>
-          ) : block.carry ? (
-            ` · ${block.carry} balls`
-          ) : (
-            ""
-          )}
+    <details open={open} onToggle={(e) => onToggle(e.currentTarget.open)} className="group rounded-lg border border-rule bg-surface shadow-card">
+      <summary className="flex cursor-pointer list-none flex-col gap-1 rounded-lg p-4 [&::-webkit-details-marker]:hidden">
+        <span className="flex items-baseline justify-between gap-3">
+          <span className="text-label text-muted">
+            {index + 1} · {kindLabel[block.kind]} · {block.where}
+            {block.rangeBalls ? (
+              <>
+                {" · "}
+                <span aria-hidden>~</span>
+                <span className="sr-only">about </span>
+                {block.rangeBalls} balls
+              </>
+            ) : block.carry ? (
+              ` · ${block.carry} balls`
+            ) : (
+              ""
+            )}
+          </span>
+          <span className="shrink-0 font-display text-xl font-semibold">{block.minutes} min</span>
+        </span>
+        <span className="flex items-center justify-between gap-3">
+          <span className="text-heading">{block.title}</span>
+          <span className="flex shrink-0 items-center gap-1 text-label text-green">
+            <span className="group-open:hidden">How to</span>
+            <span className="hidden group-open:inline">Hide</span>
+            <svg viewBox="0 0 16 16" className="size-4 transition-transform group-open:rotate-180" aria-hidden fill="none" stroke="currentColor" strokeWidth="2">
+              <path d="M4 6 L8 10 L12 6" />
+            </svg>
+          </span>
+        </span>
+        {block.kind === "challenge" && history && <LevelLine challenge={block.challenge!} history={history} />}
+      </summary>
+      <div className="flex flex-col gap-2 px-4 pb-4">
+        <ul className="flex list-disc flex-col gap-1 pl-5 text-body">
+          {block.steps.map((step) => (
+            <li key={step}>{step}</li>
+          ))}
+        </ul>
+        <p className="flex items-start gap-2 rounded-md bg-cream px-3 py-2 text-body font-semibold">
+          <svg viewBox="0 0 16 16" className="mt-1 size-4 shrink-0 text-green" aria-hidden fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round">
+            <path d="M13.5 8 A5.5 5.5 0 1 1 11.8 4" />
+            <path d="M13.5 2.5 V5 H11" />
+          </svg>
+          {block.repeat}
         </p>
-        <p className="shrink-0 font-display text-xl font-semibold">{block.minutes} min</p>
       </div>
-      <h3 className="text-heading">{block.title}</h3>
-      <ul className="flex list-disc flex-col gap-1 pl-5 text-body">
-        {block.steps.map((s) => (
-          <li key={s}>{s}</li>
-        ))}
-      </ul>
-      <p className="flex items-start gap-2 rounded-md bg-cream px-3 py-2 text-body font-semibold">
-        <svg viewBox="0 0 16 16" className="mt-1 size-4 shrink-0 text-green" aria-hidden fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round">
-          <path d="M13.5 8 A5.5 5.5 0 1 1 11.8 4" />
-          <path d="M13.5 2.5 V5 H11" />
-        </svg>
-        {block.repeat}
-      </p>
-      {block.kind === "challenge" && history && <LevelLine challenge={block.challenge!} history={history} />}
-    </Card>
+    </details>
   );
 }
 
 export function PracticePlanScreen() {
   const store = useStore();
   const [minutes, setMinutes] = useState<Minutes>(30);
+  // Which plan cards are open (by title). Everything starts folded.
+  const [openCards, setOpenCards] = useState<Record<string, boolean>>({});
   const [changing, setChanging] = useState(false);
   // Open/closed is the golfer's choice; cancelling a focus change leaves it open, so
   // focus can return to the Change focus button.
@@ -253,13 +271,31 @@ export function PracticePlanScreen() {
 
         <Column span={7} className="lg:col-start-6 lg:row-span-2 lg:row-start-1">
           <section aria-labelledby="plan-title" className="flex flex-col gap-3">
-            <h2 id="plan-title" className="text-heading">
-              {store.focus ? "Your" : "Starter"} {minutes}-minute plan
-            </h2>
-            <ol className="grid gap-3 xl:grid-cols-2">
+            <div className="flex items-baseline justify-between gap-3">
+              <h2 id="plan-title" className="text-heading">
+                {store.focus ? "Your" : "Starter"} {minutes}-minute plan
+              </h2>
+              <button
+                type="button"
+                onClick={() => {
+                  const allOpen = plan.blocks.every((b) => openCards[b.title]);
+                  setOpenCards(Object.fromEntries(plan.blocks.map((b) => [b.title, !allOpen])));
+                }}
+                className="shrink-0 rounded-sm text-label text-green underline decoration-green/40 decoration-2 underline-offset-[3px] hover:decoration-green"
+              >
+                {plan.blocks.every((b) => openCards[b.title]) ? "Hide all steps" : "Show all steps"}
+              </button>
+            </div>
+            <ol className="grid items-start gap-3 xl:grid-cols-2">
               {plan.blocks.map((b, i) => (
                 <li key={`${b.kind}-${b.title}`} className={b.kind === "challenge" || (plan.blocks.length % 2 === 0 && b.kind === "warmup") ? "xl:col-span-2" : undefined}>
-                  <BlockCard block={b} index={i} history={b.kind === "challenge" ? history : undefined} />
+                  <BlockCard
+                    block={b}
+                    index={i}
+                    history={b.kind === "challenge" ? history : undefined}
+                    open={Boolean(openCards[b.title])}
+                    onToggle={(open) => setOpenCards((cards) => (cards[b.title] === open ? cards : { ...cards, [b.title]: open }))}
+                  />
                 </li>
               ))}
             </ol>
