@@ -34,12 +34,13 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
         <a href="#main" className="sr-only z-50 rounded-md bg-green px-4 py-3 font-semibold text-on-green focus:not-sr-only focus:fixed focus:left-4 focus:top-4">
           Skip to content
         </a>
-        <Suspense fallback={<NavBar path={null} extra={<DeviceMenu />} />}>
-          <AppNav extra={<DeviceMenu />} />
+        <Suspense fallback={<NavBar path={null} />}>
+          <AppNav />
         </Suspense>
-        <main id="main" className="mx-auto w-full max-w-[90rem] px-4 pb-28 pt-6 sm:px-6 sm:pb-12 sm:pt-10 lg:px-12">
+        <main id="main" className="mx-auto w-full max-w-[90rem] px-4 pb-36 pt-6 sm:px-6 sm:pb-20 sm:pt-10 lg:px-12">
           {children}
         </main>
+        <DeviceMenu />
       </body>
     </html>
   );

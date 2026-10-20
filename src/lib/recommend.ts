@@ -98,7 +98,13 @@ export type Leak = { category: Category; strokes: number; reason: string; tip?: 
 const round1 = (n: number) => Math.round(n * 10) / 10;
 const pct = (n: number, d: number) => (d ? Math.round((n / d) * 100) : 0);
 // "so that cost you about 2.1 strokes" or, when ahead of the benchmark, a compliment.
-const costText = (n: number) => (round1(n) > 0 ? `so that cost you about ${round1(n)} ${round1(n) === 1 ? "stroke" : "strokes"}` : "so you're ahead of a bogey golfer here");
+// Estimates, so say them like estimates: "less than a stroke", "about a stroke", "roughly 5 strokes".
+export function roughStrokes(n: number) {
+  if (n < 0.75) return "less than a stroke";
+  if (n < 1.5) return "about a stroke";
+  return `roughly ${Math.round(n)} strokes`;
+}
+const costText = (n: number) => (round1(n) > 0 ? `so that cost you ${roughStrokes(n)}` : "so you're ahead of a bogey golfer here");
 
 // A clear miss pattern: at least 2 misses, and 60%+ of them the same way.
 function pattern(misses: Record<string, number>) {

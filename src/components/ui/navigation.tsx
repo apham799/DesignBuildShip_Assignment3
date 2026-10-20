@@ -71,14 +71,13 @@ export function BrandMark() {
 }
 
 // One nav everywhere: a top bar on wide screens, a bottom tab bar on phones.
-// extra: small controls for the right end of the top bar (the device data menu).
-export function AppNav({ extra }: { extra?: ReactNode }) {
-  return <NavBar path={usePathname()} extra={extra} />;
+export function AppNav() {
+  return <NavBar path={usePathname()} />;
 }
 
 // Rendered with path=null while the URL is not known yet (prerendering), so the
 // nav is in the first HTML and the active tab fills in on hydration.
-export function NavBar({ path, extra }: { path: string | null; extra?: ReactNode }) {
+export function NavBar({ path }: { path: string | null }) {
   return (
     <>
       <header className="sticky top-0 z-20 border-b border-cream-deep bg-cream/95 backdrop-blur">
@@ -103,7 +102,6 @@ export function NavBar({ path, extra }: { path: string | null; extra?: ReactNode
                 })}
               </ul>
             </nav>
-            {extra}
           </div>
         </div>
       </header>

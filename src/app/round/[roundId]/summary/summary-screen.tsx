@@ -2,7 +2,7 @@
 
 import { finishRound, lockFocus } from "@/lib/actions";
 import { shortDate, toPar } from "@/lib/format";
-import { hitGreen, playedHoles, recommend, roundStats } from "@/lib/recommend";
+import { hitGreen, playedHoles, recommend, roughStrokes, roundStats } from "@/lib/recommend";
 import { categoryLabel, type Round, type Store } from "@/lib/types";
 import { Alert, Badge, Button, ButtonLink, Card, Column, Columns, Page, PageHeader, Stat, Tip } from "@/components/ui";
 import { RoundGate } from "../round-gate";
@@ -92,7 +92,7 @@ function Summary({ round, store }: { round: Round; store: Store }) {
               {rec.top.tip && <p className="rounded-md border border-brass/50 bg-surface p-3 text-body">{rec.top.tip}</p>}
               {rec.runnerUp && rec.runnerUp.strokes > 0 && (
                 <p className="text-label font-normal text-muted">
-                  Next closest: {categoryLabel[rec.runnerUp.category]} (about {rec.runnerUp.strokes} {rec.runnerUp.strokes === 1 ? "stroke" : "strokes"}).
+                  Next closest: {categoryLabel[rec.runnerUp.category]} ({roughStrokes(rec.runnerUp.strokes)}).
                 </p>
               )}
               <p className="text-label font-normal text-muted">Estimated from your score, putts and hits compared with a bogey golfer. Not shot-by-shot data.</p>
@@ -170,14 +170,6 @@ function Summary({ round, store }: { round: Round; store: Store }) {
             <p className="text-body text-muted">Entered as totals, so there&rsquo;s no scorecard or short-game estimate. Track hole by hole next time for both.</p>
           )}
 
-          <div className="flex flex-wrap gap-3">
-            <ButtonLink href="/practice" variant="secondary">
-              Practice plan
-            </ButtonLink>
-            <ButtonLink href="/" variant="ghost">
-              Home
-            </ButtonLink>
-          </div>
         </Column>
       </Columns>
     </Page>

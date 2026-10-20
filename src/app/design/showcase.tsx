@@ -55,7 +55,7 @@ export function Showcase() {
         <Card tone="cream" className="flex flex-col gap-2">
           <Badge tone="brass">Your focus</Badge>
           <p className="text-heading">Putting</p>
-          <p className="text-body">Three-putts cost you about 3 strokes last round.</p>
+          <p className="text-body">Three-putts cost you roughly 3 strokes last round.</p>
         </Card>
         <div className="flex flex-wrap gap-2">
           <Badge>Par 4</Badge>

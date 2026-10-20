@@ -54,7 +54,7 @@ function FirstVisit() {
           <h2 id="example" className="text-heading">
             Where to focus: Putting
           </h2>
-          <p className="text-body">36 putts over 18 holes, with 4 three-putts. A bogey golfer takes about 34, so that cost you about 2 strokes.</p>
+          <p className="text-body">36 putts over 18 holes, with 4 three-putts. A bogey golfer takes about 34, so that cost you roughly 2 strokes.</p>
           <div className="rounded-md border border-brass/50 bg-surface p-3">
             <p className="text-label text-muted">Your 30-minute plan</p>
             <p className="text-body">Warm up → Lag ladder → Twenty threes challenge (target 15 of 20)</p>
@@ -144,6 +144,17 @@ function WelcomeBack({ store }: { store: Store }) {
           {since && <p className="text-body text-muted">{since.charAt(0).toUpperCase() + since.slice(1)}.</p>}
         </div>
 
+        <div className="flex flex-wrap gap-3">
+          {current ? (
+            <ButtonLink href={`/round/${current.id}/hole/${current.currentHole}`}>Resume on hole {current.currentHole}</ButtonLink>
+          ) : (
+            <ButtonLink href="/play">Start a round</ButtonLink>
+          )}
+          <ButtonLink href="/practice/log" variant="secondary">
+            Log practice
+          </ButtonLink>
+        </div>
+
         {current && (
           <Card tone="green" as="section" labelledBy="resume" className="flex flex-col gap-3">
             <h2 id="resume" className="text-heading">
@@ -153,9 +164,6 @@ function WelcomeBack({ store }: { store: Store }) {
               {current.courseName}, hole {current.currentHole} of {current.holes.length}
               {playedHoles(current).length > 0 && ` · ${toPar(roundStats(current).strokes, roundStats(current).par)} through ${playedHoles(current).length}`}
             </p>
-            <ButtonLink href={`/round/${current.id}/hole/${current.currentHole}`} variant="secondary" className="w-fit border-white">
-              Resume on hole {current.currentHole}
-            </ButtonLink>
           </Card>
         )}
 
@@ -240,15 +248,6 @@ function WelcomeBack({ store }: { store: Store }) {
           )}
         </Card>
 
-        <div className="flex flex-wrap gap-3">
-          {!current && <ButtonLink href="/play">Start a round</ButtonLink>}
-          <ButtonLink href="/practice/log" variant="secondary">
-            Log practice
-          </ButtonLink>
-          <ButtonLink href="/history" variant="ghost">
-            History
-          </ButtonLink>
-        </div>
       </Column>
     </Columns>
   );
