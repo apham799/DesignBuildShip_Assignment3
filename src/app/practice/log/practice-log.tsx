@@ -151,6 +151,8 @@ function PracticeLogForm({ initialFocus, initialMinutes, also }: { initialFocus?
                 setFocus(v as FocusChoice);
                 setDone(planDrills(v as FocusChoice));
                 setChallenge("");
+                // The challenge (and its range) belongs to the old focus, and its field was just cleared.
+                setErrors((e) => ({ ...e, focus: undefined, challenge: undefined }));
               }}
               options={focusOptions}
               error={errors.focus}

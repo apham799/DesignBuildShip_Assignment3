@@ -36,7 +36,11 @@ function TotalsForm({ round }: { round: Round }) {
     autoComplete: "off",
   });
 
-  function validate(): Errors<Field> {
+  // Limits depend on how many holes were played, so validate takes the count.
+  function validate(count = Number(holeCount)): Errors<Field> {
+    const holes = round.holes.slice(0, count);
+    const n = holes.length;
+    const fairwaysPossible = holes.filter((h) => h.par !== 3).length;
     const strokes = wholeNumber(values.strokes);
     const putts = wholeNumber(values.putts);
     const fairways = values.fairways.trim() ? wholeNumber(values.fairways) : 0;
@@ -131,7 +135,11 @@ function TotalsForm({ round }: { round: Round }) {
                 name="holes"
                 columns={2}
                 value={holeCount}
-                onChange={setHoleCount}
+                onChange={(v) => {
+                  setHoleCount(v);
+                  // Errors already on screen quote hole-count limits; recheck them against the new count.
+                  if (hasErrors(errors)) setErrors(validate(Number(v)));
+                }}
                 options={[
                   { value: "9", label: "Front 9", description: `Par ${round.holes.slice(0, 9).reduce((s, h) => s + h.par, 0)}` },
                   { value: "18", label: "All 18", description: `Par ${round.holes.reduce((s, h) => s + h.par, 0)}` },
