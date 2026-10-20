@@ -3,14 +3,18 @@
 import { useRouter, useSearchParams } from "next/navigation";
 import { useRef, useState } from "react";
 import { buildPlan, challenges, drills } from "@/data/drills";
-import { logPractice } from "@/lib/actions";
+import { clearPracticeDraft, logPractice, savePracticeDraft, updatePractice } from "@/lib/actions";
+import { timeAgo } from "@/lib/format";
 import { hasErrors, wholeNumber, type Errors } from "@/lib/forms";
 import { useStore } from "@/lib/storage";
-import type { Category, PracticeSession } from "@/lib/types";
-import { Alert, Button, Card, Checkbox, ChoiceGroup, Column, Columns, focusFirstError, LoadingCard, Page, PageHeader, TextArea, TextInput } from "@/components/ui";
+import { categoryLabel, type Category, type PracticeDraft, type PracticeSession, type Store } from "@/lib/types";
+import { Alert, Button, ButtonLink, Card, Checkbox, ChoiceGroup, Column, Columns, focusFirstError, LoadingCard, Page, PageHeader, TextArea, TextInput } from "@/components/ui";
 
 type FocusChoice = Category | "mixed";
 type Field = "focus" | "minutes" | "balls" | "challenge" | "feel";
+// Everything the form holds, exactly as typed.
+type Values = Omit<PracticeDraft, "savedAt">;
+type Plan = { focus: FocusChoice; minutes: 15 | 30 | 60; also: Category[] };
 
 const focusOptions: { value: FocusChoice; label: string }[] = [
   { value: "driving", label: "Driving" },
@@ -29,58 +33,152 @@ const feelOptions = [
 ];
 
 const isFocus = (v: string | null): v is FocusChoice => focusOptions.some((o) => o.value === v);
+const focusName = (f?: FocusChoice) => (!f ? "nothing chosen" : f === "mixed" ? "Mixed bucket" : categoryLabel[f]);
+
+function planDrillIds(plan: Plan) {
+  return buildPlan(plan.focus, plan.minutes, plan.also).blocks.flatMap((b) => (b.drillId ? [b.drillId] : []));
+}
+
+const blank = (focus?: FocusChoice): Values => ({ focus, also: [], minutes: "", balls: "", drillIds: [], challenge: "", notes: "" });
+
+const fromPlan = (plan: Plan): Values => ({ ...blank(plan.focus), also: plan.also, plannedMinutes: plan.minutes, minutes: String(plan.minutes), drillIds: planDrillIds(plan) });
+
+const fromSession = (p: PracticeSession): Values => ({
+  focus: p.focus,
+  also: [],
+  minutes: String(p.minutes),
+  balls: p.balls === undefined ? "" : String(p.balls),
+  drillIds: p.drillIds,
+  challenge: p.challengeScore === undefined ? "" : String(p.challengeScore),
+  feel: String(p.feel),
+  notes: p.notes ?? "",
+});
+
+function readPlan(params: URLSearchParams): Plan | null {
+  const focus = params.get("focus");
+  const minutes = Number(params.get("minutes"));
+  if (!isFocus(focus) || ![15, 30, 60].includes(minutes)) return null;
+  const also = (params.get("also") ?? "").split(",").filter((c): c is Category => isFocus(c) && c !== "mixed" && c !== focus);
+  return { focus, minutes: minutes as Plan["minutes"], also };
+}
 
 export function PracticeLogScreen() {
   const store = useStore();
   const params = useSearchParams();
+  const query = params.toString();
+  // The choice belongs to this exact link; a new plan link asks again.
+  const [choice, setChoice] = useState<{ query: string; use: "draft" | "plan" | "fresh" } | null>(null);
   if (!store) return <LoadingCard label="Loading form…" />;
-  const fromQuery = params.get("focus");
-  const focus = isFocus(fromQuery) ? fromQuery : store.focus?.category;
-  const minutes = wholeNumber(params.get("minutes") ?? "");
-  // Extra areas mixed into the plan, e.g. ?also=approach,driving
-  const fromPlan = isFocus(fromQuery) ? (params.get("also") ?? "").split(",") : (store.focus?.also ?? []);
-  const also = fromPlan.filter((c): c is Category => isFocus(c) && c !== "mixed");
-  return <PracticeLogForm initialFocus={focus} initialMinutes={minutes ?? undefined} also={also} />;
+
+  const editId = params.get("edit");
+  if (editId) {
+    const session = store.practice.find((p) => p.id === editId);
+    if (!session) {
+      return (
+        <Page>
+          <PageHeader title="Session not found" back={{ href: "/history", label: "History" }} />
+          <Alert title="This practice session isn't saved on this device">It may have been deleted.</Alert>
+        </Page>
+      );
+    }
+    return <PracticeLogForm key={`edit-${editId}`} mode={{ kind: "edit", session }} initial={fromSession(session)} store={store} />;
+  }
+
+  const plan = readPlan(params);
+  const draft = store.practiceDraft;
+  const use = choice?.query === query ? choice.use : null;
+  const draftMatchesPlan = Boolean(draft && plan && draft.focus === plan.focus && draft.plannedMinutes === plan.minutes);
+
+  // A draft and a different plan: ask which one to log.
+  if (draft && plan && !draftMatchesPlan && !use) {
+    return (
+      <Page>
+        <PageHeader title="Log your practice" back={{ href: "/practice", label: "Practice plan" }} />
+        <Card tone="cream" as="section" labelledBy="draft-choice" className="flex max-w-xl flex-col gap-3">
+          <h2 id="draft-choice" className="text-heading">
+            You have an unfinished log
+          </h2>
+          <p className="text-body">
+            Started {timeAgo(draft.savedAt)}: <span className="font-semibold">{focusName(draft.focus)}</span>
+            {draft.minutes.trim() ? ` · ${draft.minutes} min` : " · no minutes yet"}
+            {draft.notes.trim() ? " · has notes" : ""}.
+          </p>
+          <div className="flex flex-col gap-3 sm:flex-row">
+            <Button onClick={() => setChoice({ query, use: "draft" })}>Resume your draft</Button>
+            <Button
+              variant="secondary"
+              onClick={() => {
+                clearPracticeDraft();
+                setChoice({ query, use: "plan" });
+              }}
+            >
+              Log this plan: {focusName(plan.focus)}, {plan.minutes} min
+            </Button>
+          </div>
+          <p className="text-label font-normal text-muted">Logging the plan discards the draft.</p>
+        </Card>
+      </Page>
+    );
+  }
+
+  const resumeDraft = Boolean(draft && use !== "fresh" && use !== "plan" && (use === "draft" || draftMatchesPlan || !plan));
+  const initial = resumeDraft ? draft! : plan ? fromPlan(plan) : blank(store.focus?.category);
+  const source = resumeDraft ? "draft" : plan ? "plan" : "blank";
+  return (
+    <PracticeLogForm
+      key={`${query}-${use ?? ""}`}
+      mode={{ kind: "new", source, savedAt: resumeDraft ? draft!.savedAt : undefined }}
+      initial={initial}
+      store={store}
+      onStartOver={() => {
+        clearPracticeDraft();
+        setChoice({ query, use: plan ? "plan" : "fresh" });
+      }}
+    />
+  );
 }
 
-function PracticeLogForm({ initialFocus, initialMinutes, also }: { initialFocus?: FocusChoice; initialMinutes?: number; also: Category[] }) {
+type Mode = { kind: "edit"; session: PracticeSession } | { kind: "new"; source: "draft" | "plan" | "blank"; savedAt?: string };
+
+function PracticeLogForm(props: { mode: Mode; initial: Values; store: Store; onStartOver?: () => void }) {
+  const { store, onStartOver } = props;
+  // Fixed when the form opens: saving the draft while typing must not change where it came from.
+  const [{ mode, initial }] = useState(() => ({ mode: props.mode, initial: props.initial }));
   const router = useRouter();
   const formRef = useRef<HTMLFormElement>(null);
-  const planDrills = (f?: FocusChoice) =>
-    f && initialMinutes && [15, 30, 60].includes(initialMinutes)
-      ? buildPlan(f, initialMinutes as 15 | 30 | 60, f === initialFocus ? also : []).blocks.flatMap((b) => (b.drillId ? [b.drillId] : []))
-      : [];
-
-  const [focus, setFocus] = useState<FocusChoice | undefined>(initialFocus);
-  const [minutes, setMinutes] = useState(initialMinutes ? String(initialMinutes) : "");
-  const [balls, setBalls] = useState("");
-  const [done, setDone] = useState<string[]>(planDrills(initialFocus));
-  const [challenge, setChallenge] = useState("");
-  const [feel, setFeel] = useState<string>();
-  const [notes, setNotes] = useState("");
+  const [v, setV] = useState<Values>(initial);
   const [errors, setErrors] = useState<Errors<Field>>({});
+  const editing = mode.kind === "edit";
 
-  const challengeDef = focus ? challenges[focus] : undefined;
-  // The lead area's drills, plus any mixed in from the plan.
-  const mixedIn = focus === initialFocus ? also : [];
+  // Every change is kept as a draft, so leaving the page loses nothing.
+  const change = (patch: Partial<Values>) => {
+    const next = { ...v, ...patch };
+    setV(next);
+    if (!editing) savePracticeDraft({ ...next, savedAt: new Date().toISOString() });
+  };
+
+  const challengeDef = v.focus ? challenges[v.focus] : undefined;
   const drillChoices =
-    focus === "mixed" ? drills.filter((d) => ["distance-ladder", "fairway-gates", "lag-ladder"].includes(d.id)) : drills.filter((d) => d.category === focus || mixedIn.includes(d.category));
+    v.focus === "mixed"
+      ? drills.filter((d) => ["distance-ladder", "fairway-gates", "lag-ladder"].includes(d.id))
+      : drills.filter((d) => d.category === v.focus || v.also.includes(d.category) || v.drillIds.includes(d.id));
+  const prefilled = mode.kind === "new" && mode.source === "plan" && v.focus === initial.focus;
 
   function validate(): Errors<Field> {
     const e: Errors<Field> = {};
-    if (!focus) e.focus = "Choose what you worked on.";
-    const m = wholeNumber(minutes);
-    if (!minutes.trim()) e.minutes = "Enter how long you practiced, in minutes.";
+    if (!v.focus) e.focus = "Choose what you worked on.";
+    const m = wholeNumber(v.minutes);
+    if (!v.minutes.trim()) e.minutes = "Enter how long you practiced, in minutes.";
     else if (m === null || m < 1 || m > 300) e.minutes = "Enter minutes as a whole number from 1 to 300.";
-    if (balls.trim()) {
-      const b = wholeNumber(balls);
+    if (v.balls.trim()) {
+      const b = wholeNumber(v.balls);
       if (b === null || b > 500) e.balls = "Enter a number of balls from 0 to 500, or leave it blank.";
     }
-    if (challenge.trim() && challengeDef) {
-      const c = wholeNumber(challenge);
+    if (v.challenge.trim() && challengeDef) {
+      const c = wholeNumber(v.challenge);
       if (c === null || c > challengeDef.outOf) e.challenge = `Enter a challenge score from 0 to ${challengeDef.outOf}, or leave it blank.`;
     }
-    if (!feel) e.feel = "Choose how the session felt.";
+    if (!v.feel) e.feel = "Choose how the session felt.";
     return e;
   }
 
@@ -93,30 +191,53 @@ function PracticeLogForm({ initialFocus, initialMinutes, also }: { initialFocus?
       return;
     }
     const session: Omit<PracticeSession, "id"> = {
-      date: new Date().toISOString(),
-      focus: focus!,
-      minutes: wholeNumber(minutes)!,
-      balls: wholeNumber(balls) ?? undefined,
-      drillIds: done.filter((id) => drillChoices.some((d) => d.id === id)),
-      challengeId: challenge.trim() ? challengeDef?.id : undefined,
-      challengeScore: challenge.trim() ? wholeNumber(challenge)! : undefined,
-      challengeOutOf: challenge.trim() ? challengeDef?.outOf : undefined,
-      feel: Number(feel) as PracticeSession["feel"],
-      notes: notes.trim() || undefined,
+      date: editing ? mode.session.date : new Date().toISOString(),
+      focus: v.focus!,
+      minutes: wholeNumber(v.minutes)!,
+      balls: wholeNumber(v.balls) ?? undefined,
+      drillIds: v.drillIds.filter((id) => drillChoices.some((d) => d.id === id)),
+      challengeId: v.challenge.trim() ? challengeDef?.id : undefined,
+      challengeScore: v.challenge.trim() ? wholeNumber(v.challenge)! : undefined,
+      challengeOutOf: v.challenge.trim() ? challengeDef?.outOf : undefined,
+      feel: Number(v.feel) as PracticeSession["feel"],
+      notes: v.notes.trim() || undefined,
     };
-    logPractice(session);
-    router.push("/?saved=practice");
+    if (editing) {
+      updatePractice(mode.session.id, session);
+      router.push("/history");
+    } else {
+      logPractice(session);
+      router.push("/?saved=practice");
+    }
   }
 
   const errorCount = Object.values(errors).filter(Boolean).length;
-
-  const recap = focus ? buildPlan(focus, initialMinutes === 15 || initialMinutes === 60 ? initialMinutes : 30, mixedIn) : null;
+  const recapFocus = v.focus ?? store.focus?.category;
+  const recap = !editing && recapFocus ? buildPlan(recapFocus, initial.plannedMinutes === 15 || initial.plannedMinutes === 60 ? initial.plannedMinutes : 30, v.also) : null;
 
   return (
     <Page>
       <Columns>
         <Column span={5}>
-          <PageHeader title="Log your practice" back={{ href: "/practice", label: "Practice plan" }} description="A minute now means you'll know what worked next time." />
+          <PageHeader
+            title={editing ? "Edit practice session" : "Log your practice"}
+            back={editing ? { href: "/history", label: "History" } : { href: "/practice", label: "Practice plan" }}
+            description={editing ? undefined : "A minute now means you'll know what worked next time."}
+          />
+          {mode.kind === "new" && mode.source === "draft" && (
+            <Alert
+              title={`Picked up your unfinished log from ${mode.savedAt ? timeAgo(mode.savedAt) : "earlier"}`}
+              action={
+                onStartOver && (
+                  <Button variant="secondary" size="sm" onClick={onStartOver}>
+                    Start over
+                  </Button>
+                )
+              }
+            >
+              Everything you typed is here. It stays saved on this device until you save the session.
+            </Alert>
+          )}
           {recap && (
             <Card tone="cream" className="hidden flex-col gap-2 lg:flex">
               <h2 className="text-heading">{recap.minutes}-minute plan</h2>
@@ -146,20 +267,20 @@ function PracticeLogForm({ initialFocus, initialMinutes, also }: { initialFocus?
               legend="What did you work on?"
               name="focus"
               columns={2}
-              value={focus}
-              onChange={(v) => {
-                setFocus(v as FocusChoice);
-                setDone(planDrills(v as FocusChoice));
-                setChallenge("");
+              value={v.focus}
+              onChange={(f) => {
+                const focus = f as FocusChoice;
+                const plan = initial.plannedMinutes ? { focus, minutes: initial.plannedMinutes as Plan["minutes"], also: focus === initial.focus ? initial.also : [] } : null;
+                change({ focus, also: plan?.also ?? [], drillIds: plan ? planDrillIds(plan) : [], challenge: "" });
                 // The challenge (and its range) belongs to the old focus, and its field was just cleared.
                 setErrors((e) => ({ ...e, focus: undefined, challenge: undefined }));
               }}
               options={focusOptions}
               error={errors.focus}
-              hint={initialFocus ? "Filled in from your plan." : undefined}
+              hint={prefilled ? "Filled in from your plan." : undefined}
             />
-            <TextInput label="Minutes" inputMode="numeric" value={minutes} onChange={(e) => setMinutes(e.target.value)} error={errors.minutes} autoComplete="off" />
-            <TextInput label="Balls hit" optional inputMode="numeric" value={balls} onChange={(e) => setBalls(e.target.value)} error={errors.balls} autoComplete="off" />
+            <TextInput label="Minutes" inputMode="numeric" value={v.minutes} onChange={(e) => change({ minutes: e.target.value })} error={errors.minutes} autoComplete="off" />
+            <TextInput label="Range balls hit" optional inputMode="numeric" value={v.balls} onChange={(e) => change({ balls: e.target.value })} error={errors.balls} autoComplete="off" />
 
             {drillChoices.length > 0 && (
               <fieldset className="flex flex-col gap-2">
@@ -171,8 +292,8 @@ function PracticeLogForm({ initialFocus, initialMinutes, also }: { initialFocus?
                     key={d.id}
                     label={d.name}
                     description={d.where}
-                    checked={done.includes(d.id)}
-                    onChange={(e) => setDone((list) => (e.target.checked ? [...list, d.id] : list.filter((id) => id !== d.id)))}
+                    checked={v.drillIds.includes(d.id)}
+                    onChange={(e) => change({ drillIds: e.target.checked ? [...v.drillIds, d.id] : v.drillIds.filter((id) => id !== d.id) })}
                   />
                 ))}
               </fieldset>
@@ -183,20 +304,34 @@ function PracticeLogForm({ initialFocus, initialMinutes, also }: { initialFocus?
                 label={`${challengeDef.name} score`}
                 optional
                 inputMode="numeric"
-                value={challenge}
-                onChange={(e) => setChallenge(e.target.value)}
+                value={v.challenge}
+                onChange={(e) => change({ challenge: e.target.value })}
                 error={errors.challenge}
                 hint={`Out of ${challengeDef.outOf}. Target: ${challengeDef.target}.`}
                 autoComplete="off"
               />
             )}
 
-            <ChoiceGroup legend="How did it feel?" name="feel" columns={5} value={feel} onChange={setFeel} options={feelOptions} error={errors.feel} />
-            <TextArea label="Notes for next time" optional value={notes} onChange={(e) => setNotes(e.target.value)} placeholder="e.g. Lag putts felt good; short ones pushed right" maxLength={400} />
+            <ChoiceGroup legend="How did it feel?" name="feel" columns={5} value={v.feel} onChange={(feel) => change({ feel })} options={feelOptions} error={errors.feel} />
+            <TextArea
+              label="Notes for next time"
+              optional
+              value={v.notes}
+              onChange={(e) => change({ notes: e.target.value })}
+              placeholder="e.g. Lag putts felt good; short ones pushed right"
+              maxLength={400}
+            />
 
-            <Button type="submit" size="lg" block>
-              Save session
-            </Button>
+            <div className="flex flex-wrap items-center gap-3">
+              <Button type="submit" size="lg" block={!editing}>
+                {editing ? "Save changes" : "Save session"}
+              </Button>
+              {editing && (
+                <ButtonLink href="/history" variant="ghost">
+                  Cancel
+                </ButtonLink>
+              )}
+            </div>
           </form>
         </Column>
       </Columns>

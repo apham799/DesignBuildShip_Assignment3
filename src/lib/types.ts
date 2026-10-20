@@ -104,6 +104,21 @@ export type PracticeSession = {
   notes?: string;
 };
 
+// An unfinished practice log, saved as you type so leaving the form loses nothing.
+// Field values are kept exactly as typed.
+export type PracticeDraft = {
+  focus?: Category | "mixed";
+  also: Category[];
+  plannedMinutes?: number; // the plan it was started from, if any
+  minutes: string;
+  balls: string;
+  drillIds: string[];
+  challenge: string;
+  feel?: string;
+  notes: string;
+  savedAt: string; // ISO
+};
+
 // ---- Notes kept per course hole ("club down on 4") ----
 
 export type HoleNote = { text: string; roundId: string; updatedAt: string };
@@ -121,4 +136,5 @@ export type Store = {
   // checklist was hidden.
   seenTips: string[];
   checklistDismissed: boolean;
+  practiceDraft: PracticeDraft | null;
 };

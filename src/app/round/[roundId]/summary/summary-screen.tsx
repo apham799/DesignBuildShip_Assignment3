@@ -169,7 +169,6 @@ function Summary({ round, store }: { round: Round; store: Store }) {
           ) : (
             <p className="text-body text-muted">Entered as totals, so there&rsquo;s no scorecard or short-game estimate. Track hole by hole next time for both.</p>
           )}
-
         </Column>
       </Columns>
     </Page>

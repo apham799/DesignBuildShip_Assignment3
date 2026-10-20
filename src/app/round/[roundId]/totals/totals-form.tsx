@@ -19,7 +19,13 @@ function TotalsForm({ round }: { round: Round }) {
   const router = useRouter();
   const formRef = useRef<HTMLFormElement>(null);
   const [holeCount, setHoleCount] = useState(String(round.holes.length));
-  const [values, setValues] = useState<Record<Field, string>>({ strokes: "", putts: "", fairways: "", greens: "", penalties: "" });
+  // Editing a round saved as totals starts from what was saved.
+  const saved = round.mode === "totals" ? round.totals : undefined;
+  const [values, setValues] = useState<Record<Field, string>>(
+    saved
+      ? { strokes: String(saved.strokes), putts: String(saved.putts), fairways: String(saved.fairwaysHit), greens: String(saved.greensHit), penalties: String(saved.penalties) }
+      : { strokes: "", putts: "", fairways: "", greens: "", penalties: "" },
+  );
   const [errors, setErrors] = useState<Errors<Field>>({});
 
   const holes = round.holes.slice(0, Number(holeCount));

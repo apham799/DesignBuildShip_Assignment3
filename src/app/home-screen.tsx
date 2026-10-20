@@ -145,11 +145,7 @@ function WelcomeBack({ store }: { store: Store }) {
         </div>
 
         <div className="flex flex-wrap gap-3">
-          {current ? (
-            <ButtonLink href={`/round/${current.id}/hole/${current.currentHole}`}>Resume on hole {current.currentHole}</ButtonLink>
-          ) : (
-            <ButtonLink href="/play">Start a round</ButtonLink>
-          )}
+          {current ? <ButtonLink href={`/round/${current.id}/hole/${current.currentHole}`}>Resume on hole {current.currentHole}</ButtonLink> : <ButtonLink href="/play">Start a round</ButtonLink>}
           <ButtonLink href="/practice/log" variant="secondary">
             Log practice
           </ButtonLink>
@@ -247,7 +243,6 @@ function WelcomeBack({ store }: { store: Store }) {
             </>
           )}
         </Card>
-
       </Column>
     </Columns>
   );

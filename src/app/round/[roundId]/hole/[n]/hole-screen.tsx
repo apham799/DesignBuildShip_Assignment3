@@ -235,9 +235,15 @@ function HoleForm({ round, hole }: { round: Round; hole: HoleScore }) {
               ) : (
                 <p className="text-label font-normal text-muted">Finish early unlocks after {FINISH_EARLY_AFTER} holes.</p>
               ))}
-            <p className="text-body">
-              Didn&rsquo;t track every hole? <TextLink href={`/round/${round.id}/totals`}>Enter totals instead</TextLink>
-            </p>
+            {round.finishedAt ? (
+              <p className="text-body">
+                Editing a finished round. <TextLink href={`/round/${round.id}/summary`}>Back to the summary</TextLink>
+              </p>
+            ) : (
+              <p className="text-body">
+                Didn&rsquo;t track every hole? <TextLink href={`/round/${round.id}/totals`}>Enter totals instead</TextLink>
+              </p>
+            )}
           </div>
         </Column>
       </Columns>

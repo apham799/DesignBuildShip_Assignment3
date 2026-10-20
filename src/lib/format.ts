@@ -37,3 +37,13 @@ export function sessionsThisWeek(practice: PracticeSession[], today = new Date()
   const start = startOfWeek(today).getTime();
   return practice.filter((p) => new Date(p.date).getTime() >= start).length;
 }
+
+// "just now", "12 minutes ago", "3 hours ago", then falls back to daysAgo.
+export function timeAgo(iso: string, now = new Date()) {
+  const minutes = Math.floor((now.getTime() - new Date(iso).getTime()) / 60000);
+  if (minutes < 1) return "just now";
+  if (minutes < 60) return `${minutes} ${minutes === 1 ? "minute" : "minutes"} ago`;
+  const hours = Math.floor(minutes / 60);
+  if (hours < 24) return `${hours} ${hours === 1 ? "hour" : "hours"} ago`;
+  return daysAgo(iso, now);
+}

@@ -3,7 +3,7 @@
 import { challenges, drills } from "@/data/drills";
 import { recommend } from "./recommend";
 import { newId, update } from "./storage";
-import type { Category, Course, HoleScore, Par, PracticeSession, Round, RoundTotals, Store } from "./types";
+import type { Category, Course, HoleScore, Par, PracticeDraft, PracticeSession, Round, RoundTotals, Store } from "./types";
 
 // Every change to saved data goes through here.
 
@@ -134,10 +134,27 @@ export function clearFocus() {
   update((s) => ({ ...s, focus: null }));
 }
 
+// Saving a session also clears the unfinished draft it came from.
 export function logPractice(session: Omit<PracticeSession, "id">): string {
   const id = newId();
-  update((s) => ({ ...s, practice: [{ ...session, id }, ...s.practice] }));
+  update((s) => ({ ...s, practice: [{ ...session, id }, ...s.practice], practiceDraft: null }));
   return id;
+}
+
+export function updatePractice(id: string, session: Omit<PracticeSession, "id">) {
+  update((s) => ({ ...s, practice: s.practice.map((p) => (p.id === id ? { ...session, id } : p)) }));
+}
+
+export function deletePractice(id: string) {
+  update((s) => ({ ...s, practice: s.practice.filter((p) => p.id !== id) }));
+}
+
+export function savePracticeDraft(draft: PracticeDraft) {
+  update((s) => ({ ...s, practiceDraft: draft }));
+}
+
+export function clearPracticeDraft() {
+  update((s) => ({ ...s, practiceDraft: null }));
 }
 
 export function setWeeklyGoal(goal: number) {

@@ -137,34 +137,45 @@ const leakOptions: { value: Category | "unsure"; label: string }[] = [
 
 function PracticeStart() {
   const router = useRouter();
-  // In the order picked; the first one leads the plan.
-  const [picked, setPicked] = useState<string[]>([]);
-  const unsure = picked.includes("unsure");
-  const areas = picked.filter((v): v is Category => v !== "unsure");
-  const plan = picked.length ? (unsure ? buildPlan("mixed", 30) : buildPlan(areas[0], 30, areas.slice(1))) : null;
-  const names = areas.map((c) => categoryLabel[c].toLowerCase());
+  // One main answer, then optional extras: easier to revise than pick order.
+  const [main, setMain] = useState<Category | "unsure">();
+  const [also, setAlso] = useState<string[]>([]);
+  const extras = also as Category[];
+  const plan = main ? (main === "unsure" ? buildPlan("mixed", 30) : buildPlan(main, 30, extras)) : null;
+  const picked = main && main !== "unsure" ? [main, ...extras] : [];
+  const names = picked.map((c) => categoryLabel[c].toLowerCase());
   const nameList = names.length > 1 ? `${names.slice(0, -1).join(", ")} and ${names[names.length - 1]}` : names[0];
-  const ordinal = ["1st", "2nd", "3rd", "4th"];
 
   return (
     <>
       <section aria-labelledby="step-2" className="flex flex-col gap-3">
         <StepHeading n={2} id="step-2">
-          What usually costs you strokes?
+          What costs you the most strokes?
         </StepHeading>
-        <p className="text-body text-muted">Pick all that apply. Your first pick leads the plan, and after your first round Bucket List checks your guess against your stats.</p>
-        <MultiChoiceGroup
-          legend="Pick any"
+        <p className="text-body text-muted">Your best guess is fine. After your first round, Bucket List checks it against your stats.</p>
+        <ChoiceGroup
+          legend="Biggest one"
           name="leak"
           columns={2}
-          value={picked}
-          onChange={setPicked}
-          exclusive={["unsure"]}
-          options={leakOptions.map((o) => {
-            const i = areas.indexOf(o.value as Category);
-            return { ...o, description: i >= 0 && areas.length > 1 ? `${ordinal[i]} priority` : undefined };
-          })}
+          value={main}
+          onChange={(v) => {
+            setMain(v as Category | "unsure");
+            setAlso((list) => list.filter((c) => c !== v));
+          }}
+          options={leakOptions}
         />
+        {main && main !== "unsure" && (
+          <MultiChoiceGroup
+            legend="Anything else?"
+            optional
+            name="leak-also"
+            columns={3}
+            value={also}
+            onChange={setAlso}
+            hint="Adds a drill from each to your plan."
+            options={leakOptions.filter((o) => o.value !== "unsure" && o.value !== main)}
+          />
+        )}
       </section>
       {plan && (
         <section aria-labelledby="step-3" className="flex flex-col gap-3">
@@ -172,7 +183,7 @@ function PracticeStart() {
             Your first plan is ready
           </StepHeading>
           <Card tone="cream" className="flex flex-col gap-3">
-            <Badge tone="brass">{unsure ? "Starter bucket" : areas.map((c) => categoryLabel[c]).join(" + ")} · 30 minutes</Badge>
+            <Badge tone="brass">{picked.length ? picked.map((c) => categoryLabel[c]).join(" + ") : "Starter bucket"} · 30 minutes</Badge>
             <ol className="flex flex-col gap-1 text-body">
               {plan.blocks.map((b, i) => (
                 <li key={b.title}>
@@ -184,8 +195,8 @@ function PracticeStart() {
             <Button
               className="w-fit"
               onClick={() => {
-                if (!unsure && areas.length) {
-                  lockFocus(areas[0], `You said ${nameList} usually ${areas.length > 1 ? "cost" : "costs"} you strokes. Play a round and Bucket List will check.`, undefined, areas.slice(1));
+                if (picked.length) {
+                  lockFocus(picked[0], `You said ${nameList} ${picked.length > 1 ? "cost" : "costs"} you strokes. Play a round and Bucket List will check.`, undefined, picked.slice(1));
                 }
                 router.push("/practice");
               }}

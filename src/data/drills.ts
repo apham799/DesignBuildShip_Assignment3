@@ -8,8 +8,12 @@ export type Drill = {
   category: Category;
   name: string;
   where: string;
-  balls?: number;
   steps: string[];
+  // How to fill the drill's time, e.g. "Repeat the ladder until time is up."
+  repeat: string;
+  // Balls to bring for drills that reuse the same balls (putting, chipping).
+  // Range drills use up balls instead; the plan estimates those from the time.
+  carry?: number;
 };
 
 export type Challenge = {
@@ -19,7 +23,8 @@ export type Challenge = {
   how: string;
   outOf: number;
   target: number;
-  balls?: number;
+  // Range challenges use one ball per attempt; green challenges reuse `carry` balls.
+  carry?: number;
 };
 
 export const drills: Drill[] = [
@@ -28,73 +33,77 @@ export const drills: Drill[] = [
     category: "driving",
     name: "Fairway gates",
     where: "Range",
-    balls: 15,
     steps: [
       "Pick two flags or signs about 30 yards apart as your fairway.",
       "Alternate driver and your next-longest club, full routine every ball.",
       "Say out loud where it finished: in, left, or right.",
     ],
+    repeat: "Keep alternating clubs until time is up.",
   },
   {
     id: "stock-shot",
     category: "driving",
     name: "Stock shot",
     where: "Range",
-    balls: 10,
-    steps: ["Pick one club you trust off the tee.", "Hit the same shot shape at one target, 10 times.", "Only change your aim, never your swing, between balls."],
+    steps: ["Pick one club you trust off the tee.", "Hit the same shot shape at one target.", "Only change your aim, never your swing, between balls."],
+    repeat: "Hit sets of 10 until time is up, resting briefly between sets.",
   },
   {
     id: "distance-ladder",
     category: "approach",
     name: "Distance ladder",
     where: "Range",
-    balls: 16,
-    steps: ["Pick targets at roughly 75, 100, 125 and 150 yards.", "Hit 4 balls at each, changing club every ball, as on the course.", "Note which distances finish short or long."],
+    steps: ["Pick targets at roughly 75, 100, 125 and 150 yards.", "Hit one ball at each, changing club every ball, as on the course.", "Note which distances finish short or long."],
+    repeat: "One ladder is 4 balls. Climb it again until time is up.",
   },
   {
     id: "back-of-green",
     category: "approach",
     name: "Back-of-the-green",
     where: "Range",
-    balls: 12,
     steps: ["Pick a target and aim for 5 yards past it.", "Take one more club than feels right.", "Count how many carry the target; most golfers come up short."],
+    repeat: "Switch targets every 4 balls until time is up.",
   },
   {
     id: "landing-spot",
     category: "shortGame",
     name: "Landing spot",
     where: "Short-game area",
-    balls: 15,
-    steps: ["Put a towel a third of the way to the hole.", "Chip so the ball lands on the towel and rolls out.", "Move the towel after 5 balls."],
+    carry: 5,
+    steps: ["Put a towel a third of the way to the hole.", "Chip so the ball lands on the towel and rolls out.", "Collect the balls and move the towel to a new spot."],
+    repeat: "Chip all 5 balls, collect them, move the towel, and go again until time is up.",
   },
   {
     id: "up-and-down-nine",
     category: "shortGame",
     name: "Up-and-down nine",
     where: "Short-game area",
-    balls: 9,
+    carry: 9,
     steps: ["Drop 9 balls around a green: 3 easy, 3 medium, 3 hard lies.", "Chip, then putt each one out.", "A save is getting down in 2."],
+    repeat: "Play the nine, pick the balls up, and play new lies until time is up.",
   },
   {
     id: "lag-ladder",
     category: "putting",
     name: "Lag ladder",
     where: "Putting green",
-    balls: 9,
-    steps: ["Putt 3 balls each from 20, 30 and 40 feet.", "The goal is to finish inside a putter-length of the hole.", "Watch the whole roll so your eyes learn the speed."],
+    carry: 3,
+    steps: ["Putt all 3 balls from 20 feet, then 30, then 40.", "The goal is to finish inside a putter-length of the hole.", "Watch the whole roll so your eyes learn the speed."],
+    repeat: "One ladder is 9 putts. Repeat the ladder until time is up.",
   },
   {
     id: "circle-drill",
     category: "putting",
     name: "Circle drill",
     where: "Putting green",
-    balls: 6,
-    steps: ["Place 6 balls in a circle 3 feet from the hole.", "Make all 6 in a row; start over if you miss.", "Then move to 4 feet."],
+    carry: 6,
+    steps: ["Place 6 balls in a circle 3 feet from the hole.", "Make all 6 in a row; start over if you miss.", "Clear the circle, then move back to 4 feet."],
+    repeat: "Keep going until time is up. A miss means starting that circle again.",
   },
 ];
 
 export const challenges: Record<Category | "mixed", Challenge> = {
-  driving: { id: "fairway-finder", category: "driving", name: "Fairway finder", how: "10 drives at your fairway gates. Count how many finish inside.", outOf: 10, target: 6, balls: 10 },
+  driving: { id: "fairway-finder", category: "driving", name: "Fairway finder", how: "10 drives at your fairway gates. Count how many finish inside.", outOf: 10, target: 6 },
   approach: {
     id: "green-circle",
     category: "approach",
@@ -102,10 +111,9 @@ export const challenges: Record<Category | "mixed", Challenge> = {
     how: "10 shots from mixed distances. Count how many finish within about 15 yards of the target, roughly a green.",
     outOf: 10,
     target: 5,
-    balls: 10,
   },
-  shortGame: { id: "save-nine", category: "shortGame", name: "Save nine", how: "Play the up-and-down nine. Count your saves.", outOf: 9, target: 3, balls: 9 },
-  putting: { id: "twenty-threes", category: "putting", name: "Twenty threes", how: "20 putts from 3 feet, moving around the hole. Count the makes.", outOf: 20, target: 15, balls: 20 },
+  shortGame: { id: "save-nine", category: "shortGame", name: "Save nine", how: "Play the up-and-down nine once. Count your saves.", outOf: 9, target: 3, carry: 9 },
+  putting: { id: "twenty-threes", category: "putting", name: "Twenty threes", how: "20 putts from 3 feet with 3 balls, moving around the hole. Count the makes.", outOf: 20, target: 15, carry: 3 },
   mixed: {
     id: "nine-hole-range",
     category: "mixed",
@@ -113,7 +121,6 @@ export const challenges: Record<Category | "mixed", Challenge> = {
     how: "Play 9 imaginary holes: tee shot, then the approach that hole would leave. Count the greens you'd have hit.",
     outOf: 9,
     target: 3,
-    balls: 18,
   },
 };
 
@@ -139,9 +146,13 @@ export type PlanBlock = {
   kind: "warmup" | "drill" | "challenge";
   title: string;
   minutes: number;
-  where?: string;
-  balls?: number;
+  where: string;
   steps: string[];
+  // How to use the block's time; challenges are played once.
+  repeat: string;
+  // Range: balls hit (used up). Green: balls to bring (reused).
+  rangeBalls?: number;
+  carry?: number;
   drillId?: string;
   challenge?: Challenge;
 };
@@ -151,23 +162,42 @@ export type PracticePlan = {
   also: Category[];
   minutes: 15 | 30 | 60;
   blocks: PlanBlock[];
-  balls: number;
+  // What to bring: a range bucket (balls used up) and balls for the green (reused).
+  bring: { rangeBalls: number; greenBalls: number };
 };
 
 const split = { 15: { warmup: 3, drills: 7, challenge: 5 }, 30: { warmup: 5, drills: 15, challenge: 10 }, 60: { warmup: 10, drills: 35, challenge: 15 } } as const;
 
+// About 1.5 balls a minute with a full routine, rounded to the nearest 5.
+const rangeBallsFor = (minutes: number) => Math.max(5, Math.round((minutes * 1.5) / 5) * 5);
+
 function warmup(focus: Category | "mixed", minutes: number): PlanBlock {
   if (focus === "putting") {
-    return { kind: "warmup", title: "Warm up", minutes, where: "Putting green", steps: ["A few long putts to feel the green speed.", "Then 5 short ones to see the ball go in."] };
+    return {
+      kind: "warmup",
+      title: "Warm up",
+      minutes,
+      where: "Putting green",
+      carry: 3,
+      steps: ["A few long putts to feel the green speed.", "Then a few short ones to see the ball go in."],
+      repeat: "Stop when the time is up.",
+    };
   }
   return {
     kind: "warmup",
     title: "Warm up",
     minutes,
     where: "Range",
-    balls: minutes >= 10 ? 15 : 8,
+    rangeBalls: rangeBallsFor(minutes),
     steps: ["Half swings with a wedge.", "Work up to a mid-iron at three-quarter speed.", "No targets yet, just contact."],
+    repeat: "Stop when the time is up.",
   };
+}
+
+// Splits minutes across n drills so the parts add up exactly (35 → 18 + 17).
+function splitMinutes(total: number, n: number) {
+  const base = Math.floor(total / n);
+  return Array.from({ length: n }, (_, i) => base + (i < total - base * n ? 1 : 0));
 }
 
 // `also`: extra areas to mix in. The first drill of each comes right after the
@@ -183,13 +213,43 @@ export function buildPlan(focus: Category | "mixed", minutes: 15 | 30 | 60, also
   // Short sessions get one drill; longer ones get more, especially when mixing areas.
   const count = minutes === 15 ? 1 : minutes === 30 ? (extra.length ? 2 : 1) : focus === "mixed" || extra.length ? 3 : 2;
   const chosen = pool.slice(0, count);
-  const each = Math.round(time.drills / chosen.length);
+  const drillMinutes = splitMinutes(time.drills, chosen.length);
 
   const challenge = challenges[focus];
   const blocks: PlanBlock[] = [
     warmup(extra.length ? "mixed" : focus, time.warmup),
-    ...chosen.map((d) => ({ kind: "drill" as const, title: d.name, minutes: each, where: d.where, balls: d.balls, steps: d.steps, drillId: d.id })),
-    { kind: "challenge", title: challenge.name, minutes: time.challenge, balls: challenge.balls, steps: [challenge.how, `Target: ${challenge.target} of ${challenge.outOf}.`], challenge },
+    ...chosen.map((d, i) => ({
+      kind: "drill" as const,
+      title: d.name,
+      minutes: drillMinutes[i],
+      where: d.where,
+      steps: d.steps,
+      repeat: d.repeat,
+      rangeBalls: d.where === "Range" ? rangeBallsFor(drillMinutes[i]) : undefined,
+      carry: d.carry,
+      drillId: d.id,
+    })),
+    {
+      kind: "challenge",
+      title: challenge.name,
+      minutes: time.challenge,
+      where: challenge.carry ? (focus === "shortGame" ? "Short-game area" : "Putting green") : "Range",
+      steps: [challenge.how, `Target: ${challenge.target} of ${challenge.outOf}.`],
+      repeat: "Play it once and log your score.",
+      // The nine-hole range round is two shots a hole.
+      rangeBalls: challenge.carry ? undefined : challenge.outOf * (focus === "mixed" ? 2 : 1),
+      carry: challenge.carry,
+      challenge,
+    },
   ];
-  return { focus, also: extra, minutes, blocks, balls: blocks.reduce((sum, b) => sum + (b.balls ?? 0), 0) };
+  return {
+    focus,
+    also: extra,
+    minutes,
+    blocks,
+    bring: {
+      rangeBalls: Math.round(blocks.reduce((sum, b) => sum + (b.rangeBalls ?? 0), 0) / 5) * 5,
+      greenBalls: Math.max(0, ...blocks.map((b) => b.carry ?? 0)),
+    },
+  };
 }
