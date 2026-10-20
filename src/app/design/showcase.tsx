@@ -122,7 +122,7 @@ export function Showcase() {
               { value: "white", label: "White · 6,020 yds" },
             ]}
           />
-          <TextArea label="Note for next time" optional placeholder="Club down, green runs long" />
+          <TextArea label="Note for next time" optional placeholder="e.g. Club down, green runs long" />
           <Checkbox label="Hit the challenge target" description="24 of 30 inside the circle" />
           <Button type="submit">Save course</Button>
         </form>

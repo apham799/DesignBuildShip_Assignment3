@@ -230,14 +230,14 @@ export function Stepper({ label, value, onChange, min = 0, max = 99, hint, error
   const set = (n: number) => onChange(Math.min(max, Math.max(min, n)));
   const name = unit ?? label.toLowerCase();
   const stepButton =
-    "grid size-12 shrink-0 place-items-center rounded-md border-2 border-edge bg-surface text-2xl font-semibold text-ink transition-colors hover:border-ink hover:bg-cream active:translate-y-px disabled:cursor-not-allowed disabled:border-disabled-bg disabled:text-disabled disabled:hover:bg-surface";
+    "grid size-11 shrink-0 place-items-center rounded-md border-2 border-edge bg-surface text-2xl font-semibold text-ink transition-colors hover:border-ink hover:bg-cream active:translate-y-px disabled:cursor-not-allowed disabled:border-disabled-bg disabled:text-disabled disabled:hover:bg-surface";
 
   return (
     <div className="flex flex-col gap-1.5">
       <label htmlFor={id} className="text-label text-ink">
         {label}
       </label>
-      <div className="flex items-center gap-2">
+      <div className="flex items-center gap-1.5">
         <button type="button" className={stepButton} onClick={() => set(value - 1)} disabled={value <= min} aria-label={`Decrease ${name}`} aria-controls={id}>
           −
         </button>
@@ -256,7 +256,7 @@ export function Stepper({ label, value, onChange, min = 0, max = 99, hint, error
             if (!Number.isNaN(n) && n >= min && n <= max) onChange(n);
           }}
           onBlur={() => setDraft(null)}
-          className={cx(control, "h-12 w-20 text-center font-display text-2xl font-semibold [appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none")}
+          className={cx(control, "h-11 w-14 min-w-0 px-1 text-center font-display text-2xl font-semibold [appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none")}
         />
         <button type="button" className={stepButton} onClick={() => set(value + 1)} disabled={value >= max} aria-label={`Increase ${name}`} aria-controls={id}>
           +

@@ -1,6 +1,7 @@
 import type { Metadata, Viewport } from "next";
 import { Fraunces, Libre_Franklin } from "next/font/google";
-import { AppNav } from "@/components/ui";
+import { Suspense } from "react";
+import { AppNav, NavBar } from "@/components/ui";
 import "./globals.css";
 
 // Two typefaces only (Assignment 2 feedback): Fraunces for headings and big numbers,
@@ -35,7 +36,9 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
         >
           Skip to content
         </a>
-        <AppNav />
+        <Suspense fallback={<NavBar path={null} />}>
+          <AppNav />
+        </Suspense>
         <main id="main" className="mx-auto w-full max-w-3xl px-4 pb-28 pt-6 sm:pb-12 sm:pt-10">
           {children}
         </main>

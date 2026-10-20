@@ -23,7 +23,7 @@ const tabs: Tab[] = [
   {
     href: "/play",
     label: "Play",
-    match: (p) => p.startsWith("/play"),
+    match: (p) => p.startsWith("/play") || p.startsWith("/round"),
     icon: (
       <svg {...iconProps}>
         <path d="M8 21 V3 L18 7 L8 11" />
@@ -72,7 +72,12 @@ export function BrandMark() {
 
 // One nav everywhere: a top bar on wide screens, a bottom tab bar on phones.
 export function AppNav() {
-  const path = usePathname();
+  return <NavBar path={usePathname()} />;
+}
+
+// Rendered with path=null while the URL is not known yet (prerendering), so the
+// nav is in the first HTML and the active tab fills in on hydration.
+export function NavBar({ path }: { path: string | null }) {
   return (
     <>
       <header className="sticky top-0 z-20 border-b border-cream-deep bg-cream/95 backdrop-blur">
@@ -81,7 +86,7 @@ export function AppNav() {
           <nav aria-label="Main" className="hidden sm:block">
             <ul className="flex gap-1">
               {tabs.map((t) => {
-                const active = t.match(path);
+                const active = path !== null && t.match(path);
                 return (
                   <li key={t.href}>
                     <Link
@@ -105,7 +110,7 @@ export function AppNav() {
       <nav aria-label="Main" className="fixed inset-x-0 bottom-0 z-20 border-t border-cream-deep bg-cream pb-[env(safe-area-inset-bottom)] sm:hidden">
         <ul className="grid grid-cols-4">
           {tabs.map((t) => {
-            const active = t.match(path);
+            const active = path !== null && t.match(path);
             return (
               <li key={t.href}>
                 <Link

@@ -50,6 +50,8 @@ export type HoleScore = {
   green?: GreenResult; // when left blank, worked out from strokes − putts
   penalties: number;
   note?: string;
+  // The note saved on this course hole in an earlier round, shown as "last time".
+  lastNote?: string;
   // True once the golfer has moved past this hole (or touched it), so the summary
   // only counts holes that were actually played.
   played: boolean;
@@ -93,6 +95,7 @@ export type PracticeSession = {
   minutes: number;
   balls?: number;
   drillIds: string[];
+  challengeId?: string;
   challengeScore?: number;
   challengeOutOf?: number;
   feel: 1 | 2 | 3 | 4 | 5;
