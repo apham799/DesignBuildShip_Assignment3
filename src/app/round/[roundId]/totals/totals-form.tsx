@@ -138,6 +138,7 @@ function TotalsForm({ round }: { round: Round }) {
             {round.holes.length === 18 && (
               <ChoiceGroup
                 legend="Holes played"
+                required
                 name="holes"
                 columns={2}
                 value={holeCount}
@@ -152,8 +153,8 @@ function TotalsForm({ round }: { round: Round }) {
                 ]}
               />
             )}
-            <TextInput label="Total score" hint={`Par is ${par}.`} {...field("strokes")} />
-            <TextInput label="Total putts" {...field("putts")} />
+            <TextInput label="Total score" required hint={`Par is ${par}.`} {...field("strokes")} />
+            <TextInput label="Total putts" required {...field("putts")} />
             <TextInput label="Fairways hit" optional hint={`Out of ${fairwaysPossible} par 4s and 5s.`} {...field("fairways")} />
             <TextInput label="Greens in regulation" optional hint={`Out of ${n} holes.`} {...field("greens")} />
             <TextInput label="Penalty strokes" optional {...field("penalties")} />

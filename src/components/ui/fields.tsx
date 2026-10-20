@@ -156,6 +156,8 @@ type ChoiceGroupProps = {
   hint?: string;
   error?: string;
   optional?: boolean;
+  // Exposed to assistive tech (native required on the inputs, aria-required on the group).
+  required?: boolean;
   columns?: 2 | 3 | 4 | 5;
 };
 
@@ -170,19 +172,36 @@ const tile = (error?: string) =>
   );
 
 // A radio group drawn as large tappable tiles. Native radios underneath, so arrow keys
-// move between options and screen readers announce "1 of 3".
-export function ChoiceGroup({ legend, name, options, value, onChange, hint, error, optional, columns = 3 }: ChoiceGroupProps) {
+// move between options and screen readers announce "1 of 3". The group is a
+// radiogroup (named by its legend) that carries required/invalid; each radio also
+// carries invalid and points at the hint or error, so it is read on whichever option
+// focus lands.
+export function ChoiceGroup({ legend, name, options, value, onChange, hint, error, optional, required, columns = 3 }: ChoiceGroupProps) {
   const id = useId();
   const msgId = `${id}-msg`;
+  const legendId = `${id}-legend`;
+  const describedBy = error || hint ? msgId : undefined;
   return (
-    <fieldset className="flex flex-col gap-1.5" aria-describedby={error || hint ? msgId : undefined}>
-      <legend className="mb-1.5 text-label text-ink">
+    <fieldset role="radiogroup" aria-labelledby={legendId} aria-required={required || undefined} aria-invalid={error ? true : undefined} className="flex flex-col gap-1.5">
+      <legend id={legendId} className="mb-1.5 text-label text-ink">
         <LabelText label={legend} optional={optional} />
       </legend>
       <div className={cx("grid gap-2", columnClass[columns])}>
         {options.map((o) => (
           <label key={o.value} className="relative block cursor-pointer">
-            <input type="radio" name={name} value={o.value} checked={value === o.value} onChange={() => onChange(o.value)} data-invalid={error ? true : undefined} className="peer sr-only" />
+            {/* aria-invalid is allowed on native radios (ARIA in HTML permits global aria-* attributes); this lint rule is stricter than the spec. */}
+            {/* eslint-disable-next-line jsx-a11y/role-supports-aria-props */}
+            <input
+              type="radio"
+              name={name}
+              value={o.value}
+              checked={value === o.value}
+              onChange={() => onChange(o.value)}
+              required={required}
+              aria-invalid={error ? true : undefined}
+              aria-describedby={describedBy}
+              className="peer sr-only"
+            />
             <span className={tile(error)}>
               {o.label}
               {o.description && <span className="text-label font-normal opacity-90">{o.description}</span>}
@@ -207,13 +226,14 @@ type MultiChoiceGroupProps = Omit<ChoiceGroupProps, "value" | "onChange"> & {
 export function MultiChoiceGroup({ legend, name, options, value, onChange, hint, error, optional, columns = 3, exclusive = [] }: MultiChoiceGroupProps) {
   const id = useId();
   const msgId = `${id}-msg`;
+  const describedBy = error || hint ? msgId : undefined;
   const toggle = (v: string, on: boolean) => {
     if (!on) return onChange(value.filter((x) => x !== v));
     if (exclusive.includes(v)) return onChange([v]);
     onChange([...value.filter((x) => !exclusive.includes(x)), v]);
   };
   return (
-    <fieldset className="flex flex-col gap-1.5" aria-describedby={error || hint ? msgId : undefined}>
+    <fieldset className="flex flex-col gap-1.5">
       <legend className="mb-1.5 text-label text-ink">
         <LabelText label={legend} optional={optional} />
       </legend>
@@ -228,7 +248,8 @@ export function MultiChoiceGroup({ legend, name, options, value, onChange, hint,
                 value={o.value}
                 checked={checked}
                 onChange={(e) => toggle(o.value, e.target.checked)}
-                data-invalid={error ? true : undefined}
+                aria-invalid={error ? true : undefined}
+                aria-describedby={describedBy}
                 className="peer sr-only"
               />
               <span className={tile(error)}>
@@ -328,7 +349,7 @@ export function Stepper({ label, value, onChange, min = 0, max = 99, hint, error
 
 // After a failed submit, move focus to the first field that needs fixing.
 export function focusFirstError(form: HTMLElement | null) {
-  // Radios can't carry aria-invalid, so ChoiceGroup marks them with data-invalid.
-  const el = form?.querySelector<HTMLElement>('[aria-invalid="true"], [data-invalid="true"]');
+  // Inputs, not the radiogroup wrapper, so focus lands on something focusable.
+  const el = form?.querySelector<HTMLElement>('input[aria-invalid="true"], select[aria-invalid="true"], textarea[aria-invalid="true"]');
   el?.focus();
 }

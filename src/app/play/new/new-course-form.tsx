@@ -53,9 +53,10 @@ export function NewCourseForm() {
         <Column span={7}>
           <Card>
             <form ref={formRef} noValidate onSubmit={submit} className="flex flex-col gap-5">
-              <TextInput label="Course name" value={name} onChange={(e) => setName(e.target.value)} error={errors.name} autoComplete="off" />
+              <TextInput label="Course name" required value={name} onChange={(e) => setName(e.target.value)} error={errors.name} autoComplete="off" />
               <ChoiceGroup
                 legend="Holes"
+                required
                 name="holes"
                 columns={2}
                 value={holes}

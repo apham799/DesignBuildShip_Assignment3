@@ -80,7 +80,7 @@ export function Showcase() {
             setToast(`Saved ${name.trim()}`);
           }}
         >
-          <TextInput label="Course name" value={name} onChange={(e) => setName(e.target.value)} error={nameError} hint="As it appears on the scorecard." autoComplete="off" />
+          <TextInput label="Course name" required value={name} onChange={(e) => setName(e.target.value)} error={nameError} hint="As it appears on the scorecard." autoComplete="off" />
           <Stepper label="Score" value={score} onChange={setScore} min={1} max={15} />
           <ChoiceGroup
             legend="Fairway"

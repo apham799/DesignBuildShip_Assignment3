@@ -46,8 +46,10 @@ export function DeviceMenu() {
           <p className="mt-1 text-label font-normal text-muted">Refreshing keeps everything. Use these to see the first visit or a return visit.</p>
           <div className="mt-3 flex flex-col gap-2">
             {confirming ? (
-              <>
-                <p className="text-body">Erase all rounds, practice and notes on this device?</p>
+              <div role="group" aria-labelledby={`${panelId}-q`} className="flex flex-col gap-2">
+                <p id={`${panelId}-q`} className="text-body">
+                  Erase all rounds, practice and notes on this device?
+                </p>
                 <div className="flex gap-2">
                   <Button
                     size="sm"
@@ -64,7 +66,7 @@ export function DeviceMenu() {
                     Cancel
                   </Button>
                 </div>
-              </>
+              </div>
             ) : (
               <>
                 <Button ref={whenClosed} size="sm" variant="danger" block onClick={() => setConfirming(true)}>

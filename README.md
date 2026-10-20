@@ -165,6 +165,10 @@ Checked with the agent on Oct 20, at phone (390px) and desktop (1440px) widths.
 - All 16 radio and checkbox groups use `<fieldset>` + `<legend>`, with a wrapping `<label>` on each option.
 - No field relies on a placeholder or `aria-label` alone.
 - Errors sit under their field, are linked with `aria-describedby`, set `aria-invalid`, and focus moves to the first one.
+- **Radio and checkbox groups:**
+  - Each option carries `aria-invalid` when the group has an error, and points at the group's hint or error, so the message is read whichever option focus lands on.
+  - Radio groups are a named `radiogroup` that also carries required and invalid.
+- **Required fields** use native `required`, which screen readers announce: course name, total score, total putts, minutes, what you worked on, how it felt, main focus, tees, and holes. Optional fields say "(optional)".
 
 **Screen reader read-through** (Chrome's accessibility tree, the same thing a screen reader reads):
 - **Reading order:** skip link → header → main navigation → one `h1` per page → `h2` sections → `h3` cards.
@@ -173,7 +177,7 @@ Checked with the agent on Oct 20, at phone (390px) and desktop (1440px) widths.
   - Scores read "2 over par" and "even par", not "+2" and "E". "4/18" reads "4 of 18", and "~25 balls" reads "about 25 balls".
   - Pressing − or + announces the new value ("Score 6").
   - Announcements were added for the next onboarding step, the number of courses matching a search, and the plan after a time change.
-  - Delete, Reset and Change focus move focus into their confirm step or picker, then back to the button.
+  - Delete, Reset and Change focus move focus into their confirm step or picker, then back to the button. Each confirm step is a group named by its question, so landing on "Keep" reads "Delete the round at Jackson Park on Fri, Oct 16? group, Keep, button".
   - Each hole has its own tab title ("Hole 2 · Bucket List"), so page changes say which hole.
   - The Reset button's name is no longer read twice.
 - **Already in place:** saves, toasts and errors announce through live regions. Tips move focus to the next control when dismissed. Hidden or decorative icons are `aria-hidden`.

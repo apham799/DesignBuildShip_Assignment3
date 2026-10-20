@@ -86,6 +86,14 @@ function Scorecard({ round, current }: { round: Round; current: number }) {
 }
 
 function HoleForm({ round, hole }: { round: Round; hole: HoleScore }) {
+  // A specific tab title, so screen readers hear which hole after each navigation. Set
+  // again on the next frame, after Next.js applies the page's static "Hole" title.
+  useEffect(() => {
+    const title = `Hole ${hole.number} of ${round.holes.length}, ${round.courseName} · Bucket List`;
+    document.title = title;
+    const frame = requestAnimationFrame(() => (document.title = title));
+    return () => cancelAnimationFrame(frame);
+  }, [hole.number, round.holes.length, round.courseName]);
   const router = useRouter();
   const total = round.holes.length;
   const isLast = hole.number === total;

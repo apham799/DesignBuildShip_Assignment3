@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useState } from "react";
+import { useState, useId } from "react";
 import { deletePractice, deleteRound } from "@/lib/actions";
 import { shortDate } from "@/lib/format";
 import { playedHoles, roundStats } from "@/lib/recommend";
@@ -25,11 +25,14 @@ function exportData(store: Store) {
 function RecordActions({ what, editHref, editLabel = "Edit", onDelete }: { what: string; editHref: string; editLabel?: string; onDelete: () => void }) {
   const [confirming, setConfirming] = useState(false);
   const { whenOpen, whenClosed } = useFocusSwap(confirming);
+  const questionId = useId();
   const quiet = "rounded-sm text-label font-normal text-muted underline underline-offset-[3px] hover:text-ink";
   if (confirming) {
     return (
-      <div className="flex flex-wrap items-center gap-2">
-        <span className="text-body">Delete {what}?</span>
+      <div role="group" aria-labelledby={questionId} className="flex flex-wrap items-center gap-2">
+        <span id={questionId} className="text-body">
+          Delete {what}?
+        </span>
         <Button size="sm" variant="danger" onClick={onDelete}>
           Delete
         </Button>

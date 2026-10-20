@@ -265,6 +265,7 @@ function PracticeLogForm(props: { mode: Mode; initial: Values; store: Store; onS
           <form ref={formRef} noValidate onSubmit={submit} className="flex max-w-xl flex-col gap-6">
             <ChoiceGroup
               legend="What did you work on?"
+              required
               name="focus"
               columns={2}
               value={v.focus}
@@ -279,7 +280,7 @@ function PracticeLogForm(props: { mode: Mode; initial: Values; store: Store; onS
               error={errors.focus}
               hint={prefilled ? "Filled in from your plan." : undefined}
             />
-            <TextInput label="Minutes" inputMode="numeric" value={v.minutes} onChange={(e) => change({ minutes: e.target.value })} error={errors.minutes} autoComplete="off" />
+            <TextInput label="Minutes" required inputMode="numeric" value={v.minutes} onChange={(e) => change({ minutes: e.target.value })} error={errors.minutes} autoComplete="off" />
             <TextInput label="Range balls hit" optional inputMode="numeric" value={v.balls} onChange={(e) => change({ balls: e.target.value })} error={errors.balls} autoComplete="off" />
 
             {drillChoices.length > 0 && (
@@ -312,7 +313,7 @@ function PracticeLogForm(props: { mode: Mode; initial: Values; store: Store; onS
               />
             )}
 
-            <ChoiceGroup legend="How did it feel?" name="feel" columns={5} value={v.feel} onChange={(feel) => change({ feel })} options={feelOptions} error={errors.feel} />
+            <ChoiceGroup legend="How did it feel?" required name="feel" columns={5} value={v.feel} onChange={(feel) => change({ feel })} options={feelOptions} error={errors.feel} />
             <TextArea
               label="Notes for next time"
               optional

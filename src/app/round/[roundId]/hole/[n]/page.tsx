@@ -3,11 +3,9 @@ import { Suspense } from "react";
 import { LoadingCard } from "@/components/ui";
 import { HoleScreen } from "./hole-screen";
 
-// The hole number is in the URL, so the tab title (read out on navigation) says which hole.
-export async function generateMetadata({ params }: PageProps<"/round/[roundId]/hole/[n]">): Promise<Metadata> {
-  const { n } = await params;
-  return { title: `Hole ${n}` };
-}
+// Static on purpose: reading the URL here would stop Next.js prefetching hole pages.
+// The hole screen sets the specific title ("Hole 2 of 18, …") once it renders.
+export const metadata: Metadata = { title: "Hole" };
 
 export default function HolePage() {
   return (

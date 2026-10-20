@@ -57,6 +57,7 @@ function FocusPicker({
     <div ref={box} className="flex flex-col gap-4">
       <ChoiceGroup
         legend="Main focus"
+        required
         name="main-focus"
         columns={2}
         value={main}

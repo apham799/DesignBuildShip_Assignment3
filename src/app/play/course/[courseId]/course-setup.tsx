@@ -1,7 +1,7 @@
 "use client";
 
 import { useParams, useRouter } from "next/navigation";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useId } from "react";
 import { coursePar, getCourse, teeYards } from "@/data/courses";
 import { deleteCustomCourse, startRound } from "@/lib/actions";
 import { useStore } from "@/lib/storage";
@@ -78,6 +78,7 @@ function Setup({ course, noteCount }: { course: Course; noteCount: number }) {
   const [holes, setHoles] = useState(String(course.holes.length));
   const [confirmDelete, setConfirmDelete] = useState(false);
   const { whenOpen, whenClosed } = useFocusSwap(confirmDelete);
+  const questionId = useId();
   const holeCount = Number(holes);
   const custom = course.source === "custom";
   const yards = teeYards(course, tee, holeCount);
@@ -121,6 +122,7 @@ function Setup({ course, noteCount }: { course: Course; noteCount: number }) {
               {course.tees.length > 1 && (
                 <ChoiceGroup
                   legend="Tees"
+                  required
                   name="tee"
                   columns={course.tees.length as 2 | 3}
                   value={tee}
@@ -131,6 +133,7 @@ function Setup({ course, noteCount }: { course: Course; noteCount: number }) {
               {course.holes.length === 18 && (
                 <ChoiceGroup
                   legend="How many holes?"
+                  required
                   name="holes"
                   columns={2}
                   value={holes}
@@ -156,8 +159,10 @@ function Setup({ course, noteCount }: { course: Course; noteCount: number }) {
               </h2>
               <p className="text-body text-muted">Pars you set while playing are saved here for next time.</p>
               {confirmDelete ? (
-                <div className="flex flex-col gap-3">
-                  <p className="text-body">Delete {course.name}? Rounds you played here stay in History.</p>
+                <div role="group" aria-labelledby={questionId} className="flex flex-col gap-3">
+                  <p id={questionId} className="text-body">
+                    Delete {course.name}? Rounds you played here stay in History.
+                  </p>
                   <div className="flex gap-3">
                     <Button
                       variant="danger"
