@@ -1,10 +1,11 @@
 "use client";
 
+import { useEffect } from "react";
 import { finishRound, lockFocus } from "@/lib/actions";
-import { shortDate, toPar } from "@/lib/format";
+import { shortDate } from "@/lib/format";
 import { hitGreen, playedHoles, recommend, roughStrokes, roundStats } from "@/lib/recommend";
 import { categoryLabel, type Round, type Store } from "@/lib/types";
-import { Alert, Badge, Button, ButtonLink, Card, Column, Columns, Page, PageHeader, Stat, Tip } from "@/components/ui";
+import { Alert, Badge, Button, ButtonLink, Card, Column, Columns, Page, PageHeader, Ratio, Stat, Tip, ToPar } from "@/components/ui";
 import { RoundGate } from "../round-gate";
 
 export function SummaryScreen() {
@@ -15,6 +16,9 @@ const capital = (s: string) => s.charAt(0).toUpperCase() + s.slice(1);
 const pct = (n: number, d: number) => (d ? `${Math.round((n / d) * 100)}%` : "—");
 
 function Summary({ round, store }: { round: Round; store: Store }) {
+  useEffect(() => {
+    document.title = `${round.courseName} round summary · Bucket List`;
+  }, [round.courseName]);
   const played = playedHoles(round);
 
   if (!round.finishedAt) {
@@ -61,10 +65,18 @@ function Summary({ round, store }: { round: Round; store: Store }) {
 
           <Card>
             <dl className="grid grid-cols-2 gap-x-4 gap-y-5 sm:grid-cols-4">
-              <Stat label="Score" value={stats.strokes} detail={`${toPar(stats.strokes, stats.par)} · par ${stats.par}`} />
+              <Stat
+                label="Score"
+                value={stats.strokes}
+                detail={
+                  <>
+                    <ToPar strokes={stats.strokes} par={stats.par} /> · par {stats.par}
+                  </>
+                }
+              />
               <Stat label="Putts" value={stats.putts} detail={`${(stats.putts / stats.holes).toFixed(1)} a hole`} />
-              <Stat label="Fairways" value={`${stats.fairwaysHit}/${stats.fairwaysPossible}`} detail={pct(stats.fairwaysHit, stats.fairwaysPossible)} />
-              <Stat label="Greens" value={`${stats.greensHit}/${stats.holes}`} detail={pct(stats.greensHit, stats.holes)} />
+              <Stat label="Fairways" value={<Ratio n={stats.fairwaysHit} of={stats.fairwaysPossible} />} detail={pct(stats.fairwaysHit, stats.fairwaysPossible)} />
+              <Stat label="Greens" value={<Ratio n={stats.greensHit} of={stats.holes} />} detail={pct(stats.greensHit, stats.holes)} />
             </dl>
             {stats.penalties > 0 && (
               <p className="mt-4 text-body text-muted">

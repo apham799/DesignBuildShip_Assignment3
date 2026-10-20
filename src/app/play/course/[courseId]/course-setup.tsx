@@ -6,7 +6,7 @@ import { coursePar, getCourse, teeYards } from "@/data/courses";
 import { deleteCustomCourse, startRound } from "@/lib/actions";
 import { useStore } from "@/lib/storage";
 import type { Course } from "@/lib/types";
-import { Alert, Button, ButtonLink, Card, ChoiceGroup, Column, Columns, LoadingCard, Page, PageHeader } from "@/components/ui";
+import { Alert, Button, ButtonLink, Card, ChoiceGroup, Column, Columns, LoadingCard, Page, PageHeader, useFocusSwap } from "@/components/ui";
 
 type Load = { status: "loading" } | { status: "error" } | { status: "ready"; course: Course | undefined };
 
@@ -77,6 +77,7 @@ function Setup({ course, noteCount }: { course: Course; noteCount: number }) {
   const [tee, setTee] = useState(course.tees[0].id);
   const [holes, setHoles] = useState(String(course.holes.length));
   const [confirmDelete, setConfirmDelete] = useState(false);
+  const { whenOpen, whenClosed } = useFocusSwap(confirmDelete);
   const holeCount = Number(holes);
   const custom = course.source === "custom";
   const yards = teeYards(course, tee, holeCount);
@@ -167,13 +168,13 @@ function Setup({ course, noteCount }: { course: Course; noteCount: number }) {
                     >
                       Delete course
                     </Button>
-                    <Button variant="secondary" onClick={() => setConfirmDelete(false)}>
+                    <Button ref={whenOpen} variant="secondary" onClick={() => setConfirmDelete(false)}>
                       Keep it
                     </Button>
                   </div>
                 </div>
               ) : (
-                <Button variant="danger" className="w-fit" onClick={() => setConfirmDelete(true)}>
+                <Button ref={whenClosed} variant="danger" className="w-fit" onClick={() => setConfirmDelete(true)}>
                   Delete this course
                 </Button>
               )}

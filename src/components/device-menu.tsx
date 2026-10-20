@@ -5,7 +5,7 @@ import { useEffect, useId, useRef, useState } from "react";
 import { getCourse } from "@/data/courses";
 import { loadSampleWeek } from "@/lib/actions";
 import { resetStore } from "@/lib/storage";
-import { Button, cx } from "@/components/ui";
+import { Button, cx, useFocusSwap } from "@/components/ui";
 
 // A small corner menu for trying the first visit and the return visit:
 // erase this device's data, or fill it with a sample week. Refreshing never erases.
@@ -14,6 +14,7 @@ export function DeviceMenu() {
   const [open, setOpen] = useState(false);
   const [confirming, setConfirming] = useState(false);
   const [busy, setBusy] = useState(false);
+  const { whenOpen, whenClosed } = useFocusSwap(confirming);
   const panelId = useId();
   const panelRef = useRef<HTMLDivElement>(null);
   const toggleRef = useRef<HTMLButtonElement>(null);
@@ -59,14 +60,14 @@ export function DeviceMenu() {
                   >
                     Erase everything
                   </Button>
-                  <Button size="sm" variant="secondary" onClick={() => setConfirming(false)}>
+                  <Button ref={whenOpen} size="sm" variant="secondary" onClick={() => setConfirming(false)}>
                     Cancel
                   </Button>
                 </div>
               </>
             ) : (
               <>
-                <Button size="sm" variant="danger" block onClick={() => setConfirming(true)}>
+                <Button ref={whenClosed} size="sm" variant="danger" block onClick={() => setConfirming(true)}>
                   Reset to a first visit
                 </Button>
                 <Button
@@ -96,7 +97,6 @@ export function DeviceMenu() {
         aria-expanded={open}
         aria-controls={open ? panelId : undefined}
         aria-label="Reset or load sample data"
-        title="Reset or load sample data"
         onClick={() => (open ? close() : setOpen(true))}
         className={cx(
           "flex size-9 items-center justify-center gap-1.5 rounded-full border border-rule bg-surface/95 text-label text-ink shadow-card transition-colors hover:border-ink sm:w-auto sm:px-3",

@@ -3,11 +3,11 @@
 import Link from "next/link";
 import { useState } from "react";
 import { deletePractice, deleteRound } from "@/lib/actions";
-import { shortDate, toPar } from "@/lib/format";
+import { shortDate } from "@/lib/format";
 import { playedHoles, roundStats } from "@/lib/recommend";
 import { useStore } from "@/lib/storage";
 import { categoryLabel, type Round, type Store } from "@/lib/types";
-import { Badge, Button, ButtonLink, Card, Columns, LoadingCard, Page, PageHeader } from "@/components/ui";
+import { Badge, Button, ButtonLink, Card, Columns, LoadingCard, Page, PageHeader, ToPar, useFocusSwap } from "@/components/ui";
 
 const feelWord = ["", "Rough", "Meh", "OK", "Good", "Great"];
 
@@ -24,6 +24,7 @@ function exportData(store: Store) {
 // The same quiet record actions on every row: Edit, then Delete with a confirm step.
 function RecordActions({ what, editHref, editLabel = "Edit", onDelete }: { what: string; editHref: string; editLabel?: string; onDelete: () => void }) {
   const [confirming, setConfirming] = useState(false);
+  const { whenOpen, whenClosed } = useFocusSwap(confirming);
   const quiet = "rounded-sm text-label font-normal text-muted underline underline-offset-[3px] hover:text-ink";
   if (confirming) {
     return (
@@ -32,7 +33,7 @@ function RecordActions({ what, editHref, editLabel = "Edit", onDelete }: { what:
         <Button size="sm" variant="danger" onClick={onDelete}>
           Delete
         </Button>
-        <Button size="sm" variant="ghost" onClick={() => setConfirming(false)}>
+        <Button ref={whenOpen} size="sm" variant="ghost" onClick={() => setConfirming(false)}>
           Keep
         </Button>
       </div>
@@ -43,7 +44,7 @@ function RecordActions({ what, editHref, editLabel = "Edit", onDelete }: { what:
       <Link href={editHref} className={quiet} aria-label={`${editLabel} ${what}`}>
         {editLabel}
       </Link>
-      <button type="button" className={quiet} onClick={() => setConfirming(true)} aria-label={`Delete ${what}`}>
+      <button ref={whenClosed} type="button" className={quiet} onClick={() => setConfirming(true)} aria-label={`Delete ${what}`}>
         Delete
       </button>
     </div>
@@ -69,7 +70,9 @@ function RoundRow({ round }: { round: Round }) {
             {played.length > 0 ? (
               <>
                 <span className="font-display text-2xl font-semibold">{stats.strokes}</span>
-                <span className="text-label font-normal text-muted">{toPar(stats.strokes, stats.par)}</span>
+                <span className="text-label font-normal text-muted">
+                  <ToPar strokes={stats.strokes} par={stats.par} />
+                </span>
               </>
             ) : (
               <span className="text-label text-muted">No holes</span>

@@ -1,13 +1,13 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { buildPlan, type PlanBlock, type PracticePlan } from "@/data/drills";
 import { clearFocus, lockFocus } from "@/lib/actions";
 import { daysAgo } from "@/lib/format";
 import { lastFinishedRound } from "@/lib/recommend";
 import { useStore } from "@/lib/storage";
 import { categoryLabel, type Category, type Store } from "@/lib/types";
-import { Button, ButtonLink, Card, ChoiceGroup, Column, Columns, LoadingCard, MultiChoiceGroup, Page, PageHeader, TextLink, Tip } from "@/components/ui";
+import { Button, ButtonLink, Card, ChoiceGroup, Column, Columns, LoadingCard, MultiChoiceGroup, Page, PageHeader, TextLink, Tip, useFocusSwap } from "@/components/ui";
 
 type Minutes = 15 | 30 | 60;
 
@@ -31,13 +31,30 @@ function bringText({ rangeBalls, greenBalls }: PracticePlan["bring"]) {
 }
 
 // One main focus, then any extras. Easier to read and revise than pick order.
-function FocusPicker({ initialMain, initialAlso, onDone, onCancel }: { initialMain?: Category | "mixed"; initialAlso: Category[]; onDone: () => void; onCancel?: () => void }) {
+function FocusPicker({
+  initialMain,
+  initialAlso,
+  onDone,
+  onCancel,
+  autoFocus,
+}: {
+  initialMain?: Category | "mixed";
+  initialAlso: Category[];
+  onDone: () => void;
+  onCancel?: () => void;
+  // Opened by "Change focus": move focus to the current main choice.
+  autoFocus?: boolean;
+}) {
+  const box = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    if (autoFocus) box.current?.querySelector<HTMLInputElement>("input:checked, input")?.focus();
+  }, [autoFocus]);
   const [main, setMain] = useState<Category | "mixed" | undefined>(initialMain);
   const [also, setAlso] = useState<string[]>(initialAlso);
   const [error, setError] = useState<string>();
 
   return (
-    <div className="flex flex-col gap-4">
+    <div ref={box} className="flex flex-col gap-4">
       <ChoiceGroup
         legend="Main focus"
         name="main-focus"
@@ -93,7 +110,18 @@ function BlockCard({ block, index, history }: { block: PlanBlock; index: number;
       <div className="flex items-baseline justify-between gap-3">
         <p className="text-label text-muted">
           {index + 1} · {kindLabel[block.kind]} · {block.where}
-          {block.rangeBalls ? ` · ~${block.rangeBalls} balls` : block.carry ? ` · ${block.carry} balls` : ""}
+          {block.rangeBalls ? (
+            <>
+              {" · "}
+              <span aria-hidden>~</span>
+              <span className="sr-only">about </span>
+              {block.rangeBalls} balls
+            </>
+          ) : block.carry ? (
+            ` · ${block.carry} balls`
+          ) : (
+            ""
+          )}
         </p>
         <p className="shrink-0 font-display text-xl font-semibold">{block.minutes} min</p>
       </div>
@@ -123,6 +151,12 @@ export function PracticePlanScreen() {
   const store = useStore();
   const [minutes, setMinutes] = useState<Minutes>(30);
   const [changing, setChanging] = useState(false);
+  // Open/closed is the golfer's choice; cancelling a focus change leaves it open, so
+  // focus can return to the Change focus button.
+  const [whyOpen, setWhyOpen] = useState(false);
+  // Only after the golfer changes the time, so nothing is announced on load.
+  const [planNews, setPlanNews] = useState("");
+  const { whenClosed: changeButton } = useFocusSwap(changing);
   if (!store) return <LoadingCard label="Loading your plan…" />;
 
   const focus: Category | "mixed" = store.focus?.category ?? "mixed";
@@ -143,7 +177,7 @@ export function PracticePlanScreen() {
           <PageHeader title={store.focus ? `${chosen.map((c) => categoryLabel[c]).join(" + ")} practice` : "Practice plan"} />
 
           {store.focus ? (
-            <details className="group rounded-lg border border-cream-deep bg-cream px-4 py-3" open={changing}>
+            <details className="group rounded-lg border border-cream-deep bg-cream px-4 py-3" open={whyOpen || changing} onToggle={(e) => setWhyOpen(e.currentTarget.open)}>
               <summary className="flex cursor-pointer list-none items-center justify-between gap-3 text-body">
                 <span>
                   <span className="font-semibold">{chosen.map((c) => categoryLabel[c]).join(" + ")}</span> · {source}
@@ -154,9 +188,9 @@ export function PracticePlanScreen() {
                 <p className="text-body">{store.focus.reason}</p>
                 <p className="text-label font-normal text-muted">Locked in {daysAgo(store.focus.lockedAt)}.</p>
                 {changing ? (
-                  <FocusPicker initialMain={store.focus.category} initialAlso={also} onDone={() => setChanging(false)} onCancel={() => setChanging(false)} />
+                  <FocusPicker autoFocus initialMain={store.focus.category} initialAlso={also} onDone={() => setChanging(false)} onCancel={() => setChanging(false)} />
                 ) : (
-                  <Button variant="secondary" size="sm" className="w-fit" onClick={() => setChanging(true)}>
+                  <Button ref={changeButton} variant="secondary" size="sm" className="w-fit" onClick={() => setChanging(true)}>
                     Change focus
                   </Button>
                 )}
@@ -187,13 +221,21 @@ export function PracticePlanScreen() {
             legend="How long do you have?"
             name="minutes"
             value={String(minutes)}
-            onChange={(v) => setMinutes(Number(v) as Minutes)}
+            onChange={(v) => {
+              const m = Number(v) as Minutes;
+              setMinutes(m);
+              const next = buildPlan(focus, m, also);
+              setPlanNews(`Plan updated: ${m} minutes, ${next.blocks.map((b) => b.title).join(", ")}.`);
+            }}
             options={[
               { value: "15", label: "15 min" },
               { value: "30", label: "30 min" },
               { value: "60", label: "60 min" },
             ]}
           />
+          <p role="status" className="sr-only">
+            {planNews}
+          </p>
           <p className="text-body">
             <span className="font-semibold">Bring:</span> {bringText(plan.bring)}.
           </p>

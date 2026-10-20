@@ -45,6 +45,16 @@ export function Onboarding() {
           ]}
         />
       </section>
+      {/* New steps appear below the choice; tell screen readers where to go. */}
+      <p role="status" className="sr-only">
+        {intent === "play"
+          ? "Step 2 is below: pick your course."
+          : intent === "practice"
+            ? "Step 2 is below: what costs you the most strokes?"
+            : intent === "look"
+              ? "Step 2 is below: try a hole."
+              : ""}
+      </p>
       {intent === "play" && <PlayStart />}
       {intent === "practice" && <PracticeStart />}
       {intent === "look" && <TryAHole />}
@@ -177,6 +187,9 @@ function PracticeStart() {
           />
         )}
       </section>
+      <p role="status" className="sr-only">
+        {plan ? "Step 3 is below: your first plan is ready." : ""}
+      </p>
       {plan && (
         <section aria-labelledby="step-3" className="flex flex-col gap-3">
           <StepHeading n={3} id="step-3">

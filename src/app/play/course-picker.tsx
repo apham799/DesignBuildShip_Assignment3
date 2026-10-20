@@ -4,11 +4,11 @@ import Link from "next/link";
 import { useCallback, useEffect, useState } from "react";
 import { coursePar, getCourses } from "@/data/courses";
 import { inProgressRound } from "@/lib/actions";
-import { toPar } from "@/lib/format";
+
 import { playedHoles, roundStats } from "@/lib/recommend";
 import { useStore } from "@/lib/storage";
 import type { Course } from "@/lib/types";
-import { Alert, Badge, Button, ButtonLink, Card, Column, Columns, Page, PageHeader, Skeleton, TextInput } from "@/components/ui";
+import { Alert, Badge, Button, ButtonLink, Card, Column, Columns, Page, PageHeader, Skeleton, TextInput, ToPar } from "@/components/ui";
 
 type Load = { status: "loading" } | { status: "error" } | { status: "ready"; courses: Course[] };
 
@@ -63,7 +63,12 @@ export function CoursePicker() {
               <Badge tone="warning">Round in progress</Badge>
               <p className="text-body">
                 <span className="font-semibold">{current.courseName}</span>, hole {current.currentHole} of {current.holes.length}
-                {playedHoles(current).length > 0 && <> · {toPar(roundStats(current).strokes, roundStats(current).par)} so far</>}
+                {playedHoles(current).length > 0 && (
+                  <>
+                    {" · "}
+                    <ToPar strokes={roundStats(current).strokes} par={roundStats(current).par} /> so far
+                  </>
+                )}
               </p>
               <ButtonLink href={`/round/${current.id}/hole/${current.currentHole}`} className="w-fit">
                 Resume round
@@ -73,6 +78,13 @@ export function CoursePicker() {
           )}
 
           <TextInput label="Find a course" type="search" value={query} onChange={(e) => setQuery(e.target.value)} placeholder="e.g. Jackson Park" autoComplete="off" />
+          <p role="status" className="sr-only">
+            {load.status === "ready" && q
+              ? nothingFound
+                ? `No courses match ${query.trim()}.`
+                : `${mine.length + listed.length} ${mine.length + listed.length === 1 ? "course matches" : "courses match"}.`
+              : ""}
+          </p>
         </Column>
 
         <Column span={7} className="lg:col-start-6 lg:row-span-2 lg:row-start-1">

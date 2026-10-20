@@ -156,7 +156,41 @@ The visual style builds on my Assignment 2 **Clubhouse Almanac** design system, 
 
 ## Accessibility
 
-_To be filled in: keyboard walkthrough results and contrast checks._
+Checked with the agent on Oct 20, at phone (390px) and desktop (1440px) widths.
+
+**Automated: axe-core (WCAG 2.2 A/AA + best practices), 20 screens and states, 0 violations at both widths.** The states covered: first visit and all three onboarding paths, course list and empty search, the new-course form with an error, course setup, a hole (with the tip, and with penalties open), the totals form with errors, the summary, practice with and without a focus, Change focus open, the log form with errors, the draft choice, History, the Reset menu, and `/design`. axe found one problem, now fixed: the hole strip's visible numbers weren't part of each link's spoken name (WCAG 2.5.3).
+
+**Real labels on every field: 109 field instances, 0 without a `<label>` element.**
+- All 18 text, number and select fields use `<label for>`.
+- All 16 radio and checkbox groups use `<fieldset>` + `<legend>`, with a wrapping `<label>` on each option.
+- No field relies on a placeholder or `aria-label` alone.
+- Errors sit under their field, are linked with `aria-describedby`, set `aria-invalid`, and focus moves to the first one.
+
+**Screen reader read-through** (Chrome's accessibility tree, the same thing a screen reader reads):
+- **Reading order:** skip link → header → main navigation → one `h1` per page → `h2` sections → `h3` cards.
+- **Named controls:** steppers are spinbuttons named "Score" and "Putts", with "Increase score" and "Decrease score" buttons. The hole strip reads "Hole 3: 5 strokes" and marks the current hole.
+- **Fixed during the check:**
+  - Scores read "2 over par" and "even par", not "+2" and "E". "4/18" reads "4 of 18", and "~25 balls" reads "about 25 balls".
+  - Pressing − or + announces the new value ("Score 6").
+  - Announcements were added for the next onboarding step, the number of courses matching a search, and the plan after a time change.
+  - Delete, Reset and Change focus move focus into their confirm step or picker, then back to the button.
+  - Each hole has its own tab title ("Hole 2 · Bucket List"), so page changes say which hole.
+  - The Reset button's name is no longer read twice.
+- **Already in place:** saves, toasts and errors announce through live regions. Tips move focus to the next control when dismissed. Hidden or decorative icons are `aria-hidden`.
+
+**Keyboard:** every action works by keyboard: Tab, arrow keys inside radio groups, Enter and Space. Focus rings are visible (3px outline, 5.5:1 contrast). There's a skip link, and Escape closes the Reset menu.
+
+**Text contrast** (WCAG AA needs 4.5:1 for text). Reds and muted grays were darkened after Assignment 2 feedback.
+
+| Text | Color | On white | On cream |
+|---|---|---|---|
+| Body (ink) | `#2b2a28` | 14.3:1 | 12.9:1 |
+| Muted text | `#4f4a41` | 8.8:1 | 7.9:1 |
+| Green (links, buttons, white text on green) | `#1f4d3a` | 9.6:1 | 8.6:1 |
+| Error (always with an icon) | `#8f2d23` | 8.2:1 | 7.3:1 |
+| Success | `#2f6b4f` | 6.3:1 | 5.6:1 |
+| Warning | `#7a5714` | 6.6:1 | 5.9:1 |
+| Input borders (non-text, needs 3:1) | `#7a6e56` | 5.0:1 | 4.5:1 |
 
 ## First-run check
 

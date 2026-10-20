@@ -1,5 +1,5 @@
 import Link from "next/link";
-import type { AnchorHTMLAttributes, ButtonHTMLAttributes, ReactNode } from "react";
+import type { AnchorHTMLAttributes, ComponentProps, ReactNode } from "react";
 import { cx } from "./cx";
 
 type Variant = "primary" | "secondary" | "ghost" | "danger";
@@ -23,7 +23,7 @@ const sizes: Record<Size, string> = {
   lg: "h-14 px-6 text-lg",
 };
 
-type ButtonProps = ButtonHTMLAttributes<HTMLButtonElement> & {
+type ButtonProps = ComponentProps<"button"> & {
   variant?: Variant;
   size?: Size;
   icon?: ReactNode;

@@ -4,10 +4,10 @@ import Link from "next/link";
 import { useEffect, useRef } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { finishRound, goToHole, saveHoleNote, setCustomPar, updateHole } from "@/lib/actions";
-import { toPar } from "@/lib/format";
+
 import { playedHoles, roundStats } from "@/lib/recommend";
 import type { FairwayResult, GreenResult, HoleScore, Par, Round } from "@/lib/types";
-import { Alert, Button, ChoiceGroup, Column, Columns, cx, Page, PageHeader, Stepper, TextArea, TextLink, Tip } from "@/components/ui";
+import { Alert, Button, ChoiceGroup, Column, Columns, cx, Page, PageHeader, Stepper, TextArea, TextLink, Tip, ToPar } from "@/components/ui";
 import { RoundGate } from "../../round-gate";
 
 const FINISH_EARLY_AFTER = 6;
@@ -41,7 +41,7 @@ function Scorecard({ round, current }: { round: Round; current: number }) {
     currentRef.current?.scrollIntoView({ block: "nearest", inline: "center" });
   }, [current]);
   return (
-    <nav aria-label="Holes in this round" className="-mx-4 overflow-x-auto px-4 pb-1 sm:mx-0 sm:px-0 lg:overflow-visible">
+    <nav aria-label="Holes in this round" className="relative -mx-4 overflow-x-auto px-4 pb-1 sm:mx-0 sm:px-0 lg:overflow-visible">
       <ol className="flex gap-1 lg:grid lg:grid-cols-9">
         {round.holes.map((h) => {
           const here = h.number === current;
@@ -52,14 +52,30 @@ function Scorecard({ round, current }: { round: Round; current: number }) {
                 ref={here ? currentRef : undefined}
                 href={`/round/${round.id}/hole/${h.number}`}
                 aria-current={here ? "step" : undefined}
-                aria-label={`Hole ${h.number}${h.played ? `, ${h.strokes} strokes` : ", not played yet"}`}
                 className={cx(
                   "flex h-10 w-10 shrink-0 flex-col items-center justify-center rounded-md border text-label leading-none transition-colors lg:w-auto",
                   here ? "border-green bg-green text-on-green" : h.played ? "border-rule bg-surface text-ink hover:border-ink" : "border-dashed border-edge bg-surface text-muted hover:border-ink",
                 )}
               >
-                <span className="text-[0.7rem] font-normal opacity-90">{h.number}</span>
-                <span className={cx("font-display text-base", !here && h.played && diff < 0 && "text-green")}>{h.played ? h.strokes : "·"}</span>
+                {/* Read as "Hole 3: 5 strokes" while keeping the visible "3" and "5" in the name (WCAG 2.5.3). */}
+                <span className="text-[0.7rem] font-normal opacity-90">
+                  <span className="sr-only">Hole </span>
+                  {h.number}
+                  <span className="sr-only">: </span>
+                </span>
+                <span className={cx("font-display text-base", !here && h.played && diff < 0 && "text-green")}>
+                  {h.played ? (
+                    <>
+                      {h.strokes}
+                      <span className="sr-only"> strokes</span>
+                    </>
+                  ) : (
+                    <>
+                      <span aria-hidden>·</span>
+                      <span className="sr-only">not played yet</span>
+                    </>
+                  )}
+                </span>
               </Link>
             </li>
           );
@@ -114,7 +130,9 @@ function HoleForm({ round, hole }: { round: Round; hole: HoleScore }) {
               played.length > 0 ? (
                 <p className="text-right text-label text-muted">
                   Thru {played.length}
-                  <span className="block font-display text-2xl text-ink">{toPar(stats.strokes, stats.par)}</span>
+                  <span className="block font-display text-2xl text-ink">
+                    <ToPar strokes={stats.strokes} par={stats.par} />
+                  </span>
                 </p>
               ) : undefined
             }

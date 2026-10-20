@@ -4,11 +4,11 @@ import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useCallback } from "react";
 import { inProgressRound, setChecklistDismissed } from "@/lib/actions";
-import { daysAgo, sessionsThisWeek, toPar } from "@/lib/format";
+import { daysAgo, sessionsThisWeek } from "@/lib/format";
 import { lastFinishedRound, playedHoles, recommend, roundStats } from "@/lib/recommend";
 import { isSavingToMemoryOnly, useStore } from "@/lib/storage";
 import { categoryLabel, type Store } from "@/lib/types";
-import { Alert, Badge, ButtonLink, Card, Column, Columns, cx, LoadingCard, Page, TextLink, Toast } from "@/components/ui";
+import { Alert, Badge, ButtonLink, Card, Column, Columns, cx, LoadingCard, Page, TextLink, Toast, ToPar } from "@/components/ui";
 import { Onboarding } from "./onboarding";
 
 const feelWord = ["", "Rough", "Meh", "OK", "Good", "Great"];
@@ -158,7 +158,12 @@ function WelcomeBack({ store }: { store: Store }) {
             </h2>
             <p className="text-body">
               {current.courseName}, hole {current.currentHole} of {current.holes.length}
-              {playedHoles(current).length > 0 && ` · ${toPar(roundStats(current).strokes, roundStats(current).par)} through ${playedHoles(current).length}`}
+              {playedHoles(current).length > 0 && (
+                <>
+                  {" · "}
+                  <ToPar strokes={roundStats(current).strokes} par={roundStats(current).par} /> through {playedHoles(current).length}
+                </>
+              )}
             </p>
           </Card>
         )}

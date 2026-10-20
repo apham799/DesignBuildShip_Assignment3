@@ -47,3 +47,10 @@ export function timeAgo(iso: string, now = new Date()) {
   if (hours < 24) return `${hours} ${hours === 1 ? "hour" : "hours"} ago`;
   return daysAgo(iso, now);
 }
+
+// The same score, for screen readers: "even par", "2 over par", "1 under par".
+export function toParWords(strokes: number, par: number) {
+  const d = strokes - par;
+  if (d === 0) return "even par";
+  return `${Math.abs(d)} ${d > 0 ? "over" : "under"} par`;
+}

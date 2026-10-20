@@ -1,4 +1,5 @@
 import type { ReactNode } from "react";
+import { toPar, toParWords } from "@/lib/format";
 import { cx } from "./cx";
 
 type CardProps = {
@@ -67,5 +68,29 @@ export function Ornament({ className }: { className?: string }) {
       </svg>
       <span className="h-px flex-1 bg-brass/60" />
     </div>
+  );
+}
+
+// "+2" / "E" on screen, "2 over par" / "even par" for screen readers.
+export function ToPar({ strokes, par }: { strokes: number; par: number }) {
+  return (
+    <>
+      <span aria-hidden>{toPar(strokes, par)}</span>
+      <span className="sr-only">{toParWords(strokes, par)}</span>
+    </>
+  );
+}
+
+// "4/18" on screen, "4 of 18" for screen readers.
+export function Ratio({ n, of }: { n: number; of: number }) {
+  return (
+    <>
+      <span aria-hidden>
+        {n}/{of}
+      </span>
+      <span className="sr-only">
+        {n} of {of}
+      </span>
+    </>
   );
 }

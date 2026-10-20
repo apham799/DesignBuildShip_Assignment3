@@ -274,7 +274,13 @@ export function Stepper({ label, value, onChange, min = 0, max = 99, hint, error
   // While typing, show exactly what was typed (even an empty box); otherwise show the value.
   const [draft, setDraft] = useState<string | null>(null);
 
-  const set = (n: number) => onChange(Math.min(max, Math.max(min, n)));
+  // Buttons keep focus, so say the new value out loud for screen readers.
+  const [said, setSaid] = useState("");
+  const set = (n: number) => {
+    const next = Math.min(max, Math.max(min, n));
+    onChange(next);
+    setSaid(`${label} ${next}`);
+  };
   const name = unit ?? label.toLowerCase();
   const stepButton =
     "grid size-11 shrink-0 place-items-center rounded-md border-2 border-edge bg-surface text-2xl font-semibold text-ink transition-colors hover:border-ink hover:bg-cream active:translate-y-px disabled:cursor-not-allowed disabled:border-disabled-bg disabled:text-disabled disabled:hover:bg-surface";
@@ -313,6 +319,9 @@ export function Stepper({ label, value, onChange, min = 0, max = 99, hint, error
         </button>
       </div>
       <FieldMessage id={`${id}-msg`} error={error} hint={hint} />
+      <span role="status" className="sr-only">
+        {said}
+      </span>
     </div>
   );
 }
