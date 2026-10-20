@@ -125,7 +125,7 @@ flowchart TD
   resume --> hole(["Go to Hole n"])
   wb --> focus["Focus card<br/>Putting cost roughly 3 strokes last round"]
   focus --> plan(["Go to Practice plan<br/>challenge shows your level and the next one"])
-  wb --> streakc["Practice streak · weeks in a row at the goal<br/>8-week dots · one mulligan a month"]
+  wb --> streakc["Practice streak · weeks in a row at the goal<br/>each session rolls the putt closer; the goal holes it<br/>8-week dots · one mulligan a month"]
   wb --> bucket["Your bucket list · 10 of 20 crossed off<br/>up next: 3 to go for"]
   bucket --> list["/bucket-list · rounds, practice, habits<br/>+ Bronze / Silver / Gold challenge levels"]
   wb --> checklist["Getting started<br/>ticks itself off · Hide this"]

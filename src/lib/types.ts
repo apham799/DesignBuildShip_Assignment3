@@ -141,4 +141,7 @@ export type Store = {
   // (challenge id → level). "seen" is false until the celebration is dismissed.
   unlocked: Record<string, { at: string; seen: boolean }>;
   levels: Record<string, { level: "bronze" | "silver" | "gold"; at: string; seen: boolean }>;
+  // Where the streak putt was last shown (week start + sessions), so the ball only
+  // rolls for new progress.
+  streakSeen: { week: string; sessions: number } | null;
 };

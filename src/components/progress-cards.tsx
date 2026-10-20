@@ -4,6 +4,7 @@ import Link from "next/link";
 import { achievements, crossedOff, streak, upNext } from "@/lib/progress";
 import type { Store } from "@/lib/types";
 import { Card, cx } from "@/components/ui";
+import { PuttingGreen } from "./putting-green";
 
 const dotStyle = {
   met: "bg-green border-green",
@@ -18,6 +19,8 @@ export function StreakCard({ store }: { store: Store }) {
   const s = streak(store);
   const counts = s.dots.reduce<Record<string, number>>((acc, d) => ({ ...acc, [d.state]: (acc[d.state] ?? 0) + 1 }), {});
   const toGo = Math.max(0, s.goal - s.thisWeek);
+  // This week's Monday, as the key for where the putt was last shown.
+  const week = s.dots[s.dots.length - 1].start.toISOString();
   return (
     <Card as="section" labelledBy="streak" className="flex flex-col gap-3">
       <div className="flex items-baseline justify-between gap-3">
@@ -28,9 +31,10 @@ export function StreakCard({ store }: { store: Store }) {
           <span className="font-display text-2xl font-semibold">{s.weeks}</span> {s.weeks === 1 ? "week" : "weeks"}
         </p>
       </div>
+      <PuttingGreen sessions={s.thisWeek} goal={s.goal} week={week} seen={store.streakSeen?.week === week ? store.streakSeen.sessions : 0} />
       <p className="text-body">
         This week: <span className="font-semibold">{s.thisWeek}</span> of {s.goal} sessions.{" "}
-        {s.metThisWeek ? "Goal met, the streak is safe." : `${toGo} more ${toGo === 1 ? "keeps" : "keep"} it going.`}
+        {s.metThisWeek ? <span className="font-semibold text-success">Holed it! The streak is safe.</span> : `${toGo} more ${toGo === 1 ? "putt" : "putts"} to hole it this week.`}
       </p>
       <ol aria-hidden className="grid grid-cols-8 gap-1.5">
         {s.dots.map((d) => (
