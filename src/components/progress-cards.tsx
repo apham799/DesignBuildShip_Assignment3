@@ -31,7 +31,7 @@ export function StreakCard({ store }: { store: Store }) {
           <span className="font-display text-2xl font-semibold">{s.weeks}</span> {s.weeks === 1 ? "week" : "weeks"}
         </p>
       </div>
-      <PuttingGreen sessions={s.thisWeek} goal={s.goal} week={week} seen={store.streakSeen?.week === week ? store.streakSeen.sessions : 0} />
+      <PuttingGreen sessions={s.thisWeek} goal={s.goal} week={week} seen={store.streakSeen?.week === week ? store.streakSeen.sessions : 0} streakWeeks={s.weeks} />
       <p className="text-body">
         This week: <span className="font-semibold">{s.thisWeek}</span> of {s.goal} sessions.{" "}
         {s.metThisWeek ? <span className="font-semibold text-success">Holed it! The streak is safe.</span> : `${toGo} more ${toGo === 1 ? "putt" : "putts"} to hole it this week.`}
