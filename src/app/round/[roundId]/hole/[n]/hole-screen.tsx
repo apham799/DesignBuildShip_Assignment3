@@ -165,7 +165,9 @@ function HoleForm({ round, hole }: { round: Round; hole: HoleScore }) {
             description={
               <span className="font-semibold text-ink">
                 Par {hole.par}
-                {hole.yards ? ` · ${hole.yards} yds` : ""} · Handicap {hole.handicap}
+                {hole.yards ? ` · ${hole.yards} yds` : ""}
+                {/* Custom courses have no real stroke index, so none is shown. */}
+                {custom ? "" : ` · Handicap ${hole.handicap}`}
               </span>
             }
             // No back link: the hole strip below shows where you are and goes to any hole.

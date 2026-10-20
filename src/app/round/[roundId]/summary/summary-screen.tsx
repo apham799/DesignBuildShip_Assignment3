@@ -2,7 +2,7 @@
 
 import { useEffect } from "react";
 import { finishRound, lockFocus } from "@/lib/actions";
-import { shortDate } from "@/lib/format";
+import { shortDate, teeLabel } from "@/lib/format";
 import { payoff } from "@/lib/progress";
 import { hitGreen, playedHoles, recommend, roughStrokes, roundStats } from "@/lib/recommend";
 import { categoryLabel, type Round, type Store } from "@/lib/types";
@@ -64,7 +64,7 @@ function Summary({ round, store }: { round: Round; store: Store }) {
     <Page>
       <Columns>
         <Column span={7}>
-          <PageHeader title={round.courseName} step={`${shortDate(round.startedAt)} · ${round.teeName} tees · ${stats.holes} holes`} back={{ href: "/history", label: "History" }} />
+          <PageHeader title={round.courseName} step={`${shortDate(round.startedAt)} · ${teeLabel(round.teeName)} · ${stats.holes} holes`} back={{ href: "/history", label: "History" }} />
 
           <Card>
             <dl className="grid grid-cols-2 gap-x-4 gap-y-5 sm:grid-cols-4">
@@ -117,7 +117,10 @@ function Summary({ round, store }: { round: Round; store: Store }) {
               {rec.standsOut ? (
                 <p className="text-body">{rec.top.reason}</p>
               ) : (
-                <p className="text-body">Nothing stood out this round: you were at or ahead of a bogey golfer everywhere. {categoryLabel[rec.top.category]} came closest to costing you strokes.</p>
+                <p className="text-body">
+                  Nothing stood out this round: you were at or ahead of a bogey golfer everywhere. {categoryLabel[rec.top.category]} came closest to costing you strokes.
+                  {sameFocus && " It's already your focus, so this is a good time to pick a new area or keep sharpening it."}
+                </p>
               )}
               {rec.top.tip && <p className="rounded-md border border-brass/50 bg-surface p-3 text-body">{rec.top.tip}</p>}
               {rec.runnerUp && rec.runnerUp.strokes > 0 && (
@@ -129,7 +132,7 @@ function Summary({ round, store }: { round: Round; store: Store }) {
                 {stats.holes < 6 && `Based on ${stats.holes} ${stats.holes === 1 ? "hole" : "holes"}, so treat this focus as a first hint. `}
                 Estimated from your score, putts and hits compared with a bogey golfer. Not shot-by-shot data.
               </p>
-              <div className="mt-1 flex flex-col gap-3 sm:flex-row">
+              <div className="mt-1 flex flex-col gap-3">
                 {lockedHere || sameFocus ? (
                   <>
                     <p className="flex items-center gap-2 text-body font-semibold text-success" role="status">
@@ -138,10 +141,17 @@ function Summary({ round, store }: { round: Round; store: Store }) {
                       </svg>
                       {categoryLabel[rec.top.category]} is your practice focus
                     </p>
-                    <ButtonLink href="/practice">See your practice plan</ButtonLink>
+                    <div className="flex flex-wrap gap-3">
+                      <ButtonLink href="/practice">See your practice plan</ButtonLink>
+                      <ButtonLink href="/practice?change=1" variant="secondary">
+                        {rec.standsOut ? "Change focus" : "Pick a new focus"}
+                      </ButtonLink>
+                    </div>
                   </>
                 ) : (
-                  <Button onClick={() => lockFocus(rec.top.category, rec.top.reason, round.id)}>Lock in {categoryLabel[rec.top.category].toLowerCase()} as my focus</Button>
+                  <Button className="w-fit" onClick={() => lockFocus(rec.top.category, rec.top.reason, round.id)}>
+                    Lock in {categoryLabel[rec.top.category].toLowerCase()} as my focus
+                  </Button>
                 )}
               </div>
               {store.focus && !sameFocus && !lockedHere && (

@@ -1,9 +1,11 @@
 "use client";
 
 import Link from "next/link";
+import { useRef, useState } from "react";
+import { setWeeklyGoal } from "@/lib/actions";
 import { achievements, crossedOff, streak, upNext } from "@/lib/progress";
 import type { Store } from "@/lib/types";
-import { Card, cx } from "@/components/ui";
+import { Button, Card, ChoiceGroup, cx } from "@/components/ui";
 import { Badge } from "./badges";
 import { PuttingGreen } from "./putting-green";
 
@@ -34,6 +36,9 @@ function weekWords(d: { state: string; sessions: number }) {
 // Weeks in a row at the practice goal. Forgiving: one missed week a month is a mulligan.
 export function StreakCard({ store }: { store: Store }) {
   const s = streak(store);
+  const [editingGoal, setEditingGoal] = useState(false);
+  const goalBox = useRef<HTMLDivElement>(null);
+  const changeGoal = useRef<HTMLButtonElement>(null);
   const toGo = Math.max(0, s.goal - s.thisWeek);
   // This week's Monday, as the key for where the putt was last shown.
   const week = s.dots[s.dots.length - 1].start.toISOString();
@@ -49,9 +54,50 @@ export function StreakCard({ store }: { store: Store }) {
       </div>
       <PuttingGreen sessions={s.thisWeek} goal={s.goal} week={week} seen={store.streakSeen?.week === week ? store.streakSeen.sessions : 0} streakWeeks={s.weeks} />
       <p className="text-body">
-        This week: <span className="font-semibold">{s.thisWeek}</span> of {s.goal} sessions.{" "}
+        This week: <span className="font-semibold">{s.thisWeek}</span> of {s.goal} {s.goal === 1 ? "session" : "sessions"}.{" "}
         {s.metThisWeek ? <span className="font-semibold text-success">Holed it! The streak is safe.</span> : `${toGo} more practice ${toGo === 1 ? "session" : "sessions"} to hole it this week.`}
       </p>
+      {editingGoal ? (
+        <div ref={goalBox} className="flex flex-col gap-3 rounded-md bg-cream p-3">
+          <ChoiceGroup
+            legend="Practice sessions a week"
+            name="weekly-goal"
+            columns={4}
+            value={String(s.goal)}
+            onChange={(v) => setWeeklyGoal(Number(v))}
+            hint="Pick what fits your week. The streak counts the weeks you reach it."
+            options={[1, 2, 3, 4].map((n) => ({ value: String(n), label: String(n) }))}
+          />
+          <Button
+            size="sm"
+            variant="secondary"
+            className="w-fit"
+            onClick={() => {
+              setEditingGoal(false);
+              requestAnimationFrame(() => changeGoal.current?.focus());
+            }}
+          >
+            Done
+          </Button>
+        </div>
+      ) : (
+        <p className="flex flex-wrap items-baseline gap-x-3 text-body">
+          <span>
+            Goal: <span className="font-semibold">{s.goal}</span> {s.goal === 1 ? "session" : "sessions"} a week.
+          </span>
+          <button
+            ref={changeGoal}
+            type="button"
+            onClick={() => {
+              setEditingGoal(true);
+              requestAnimationFrame(() => goalBox.current?.querySelector<HTMLInputElement>("input:checked")?.focus());
+            }}
+            className="rounded-sm text-label text-green underline decoration-green/40 decoration-2 underline-offset-[3px] hover:decoration-green"
+          >
+            Change goal
+          </button>
+        </p>
+      )}
       <div className="flex flex-col gap-1.5">
         <p id="streak-weeks" className="text-label text-ink">
           Last 8 weeks

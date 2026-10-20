@@ -101,7 +101,7 @@ export function DeviceMenu() {
         aria-label="Reset or load sample data"
         onClick={() => (open ? close() : setOpen(true))}
         className={cx(
-          "flex size-9 items-center justify-center gap-1.5 rounded-full border border-rule bg-surface/95 text-label text-ink shadow-card transition-colors hover:border-ink sm:w-auto sm:px-3",
+          "flex h-9 items-center justify-center gap-1.5 rounded-full border border-rule bg-surface/95 px-3 text-label text-ink shadow-card transition-colors hover:border-ink",
           open && "border-ink",
         )}
       >
@@ -109,9 +109,7 @@ export function DeviceMenu() {
           <path d="M2.5 8 A5.5 5.5 0 1 0 4.2 4" />
           <path d="M2.5 2.5 V5 H5" />
         </svg>
-        <span aria-hidden className="hidden sm:inline">
-          Reset
-        </span>
+        <span aria-hidden>Reset</span>
       </button>
     </div>
   );

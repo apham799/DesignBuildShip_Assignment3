@@ -56,7 +56,10 @@ export function CoursePicker() {
     <Page>
       <Columns>
         <Column span={5} sticky>
-          <PageHeader title="Where are you playing?" description="Pick a course and the par, yards and handicap for each hole fill in for you." />
+          <PageHeader
+            title="Where are you playing?"
+            description="Five Chicago public courses are built in, with par, yards and handicap for every hole. Playing somewhere else? Search for it and add it."
+          />
 
           {current && (
             <Card tone="cream" className="flex flex-col gap-3">

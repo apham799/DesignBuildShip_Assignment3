@@ -18,7 +18,7 @@ export function emptyStore(): Store {
     focus: null,
     holeNotes: {},
     customCourses: [],
-    weeklyGoal: 2,
+    weeklyGoal: 1,
     seenTips: [],
     checklistDismissed: false,
     practiceDraft: null,

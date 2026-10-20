@@ -156,6 +156,8 @@ function PracticeLogForm(props: { mode: Mode; initial: Values; store: Store; onS
   const formRef = useRef<HTMLFormElement>(null);
   const [v, setV] = useState<Values>(initial);
   const [errors, setErrors] = useState<Errors<Field>>({});
+  const [otherDrills, setOtherDrills] = useState(false);
+  const drillBox = useRef<HTMLFieldSetElement>(null);
   const editing = mode.kind === "edit";
 
   // Every change is kept as a draft, so leaving the page loses nothing.
@@ -170,6 +172,11 @@ function PracticeLogForm(props: { mode: Mode; initial: Values; store: Store; onS
     v.focus === "mixed"
       ? drills.filter((d) => ["distance-ladder", "fairway-gates", "lag-ladder"].includes(d.id))
       : drills.filter((d) => d.category === v.focus || v.also.includes(d.category) || v.drillIds.includes(d.id));
+  // Logged from a plan: list that plan's drills first, the rest of the area on request.
+  const planIds = v.focus && initial.plannedMinutes ? planDrillIds({ focus: v.focus, minutes: initial.plannedMinutes as Plan["minutes"], also: v.also }) : [];
+  const shownDrills = planIds.length && !otherDrills ? drillChoices.filter((d) => planIds.includes(d.id) || v.drillIds.includes(d.id)) : drillChoices;
+  // A putting session never touches the range, so there are no range balls to count.
+  const usesRange = !(v.focus === "putting" && v.also.length === 0) || v.balls.trim() !== "";
   const prefilled = mode.kind === "new" && mode.source === "plan" && v.focus === initial.focus;
 
   function validate(): Errors<Field> {
@@ -178,7 +185,7 @@ function PracticeLogForm(props: { mode: Mode; initial: Values; store: Store; onS
     const m = wholeNumber(v.minutes);
     if (!v.minutes.trim()) e.minutes = "Enter how long you practiced, in minutes.";
     else if (m === null || m < 1 || m > 300) e.minutes = "Enter minutes as a whole number from 1 to 300.";
-    if (v.balls.trim()) {
+    if (usesRange && v.balls.trim()) {
       const b = wholeNumber(v.balls);
       if (b === null || b > 500) e.balls = "Enter a number of balls from 0 to 500, or leave it blank.";
     }
@@ -202,7 +209,7 @@ function PracticeLogForm(props: { mode: Mode; initial: Values; store: Store; onS
       date: editing ? mode.session.date : new Date().toISOString(),
       focus: v.focus!,
       minutes: wholeNumber(v.minutes)!,
-      balls: wholeNumber(v.balls) ?? undefined,
+      balls: usesRange ? (wholeNumber(v.balls) ?? undefined) : undefined,
       drillIds: v.drillIds.filter((id) => drillChoices.some((d) => d.id === id)),
       challengeId: v.challenge.trim() ? challengeDef?.id : undefined,
       challengeScore: v.challenge.trim() ? wholeNumber(v.challenge)! : undefined,
@@ -289,14 +296,16 @@ function PracticeLogForm(props: { mode: Mode; initial: Values; store: Store; onS
               hint={prefilled ? "Filled in from your plan." : undefined}
             />
             <TextInput label="Minutes" required inputMode="numeric" value={v.minutes} onChange={(e) => change({ minutes: e.target.value })} error={errors.minutes} autoComplete="off" />
-            <TextInput label="Range balls hit" optional inputMode="numeric" value={v.balls} onChange={(e) => change({ balls: e.target.value })} error={errors.balls} autoComplete="off" />
+            {usesRange && (
+              <TextInput label="Range balls hit" optional inputMode="numeric" value={v.balls} onChange={(e) => change({ balls: e.target.value })} error={errors.balls} autoComplete="off" />
+            )}
 
             {drillChoices.length > 0 && (
-              <fieldset className="flex flex-col gap-2">
+              <fieldset ref={drillBox} className="flex flex-col gap-2">
                 <legend className="mb-1.5 text-label text-ink">
                   Drills you did <span className="font-normal text-muted">(optional)</span>
                 </legend>
-                {drillChoices.map((d) => (
+                {shownDrills.map((d) => (
                   <Checkbox
                     key={d.id}
                     label={d.name}
@@ -305,6 +314,21 @@ function PracticeLogForm(props: { mode: Mode; initial: Values; store: Store; onS
                     onChange={(e) => change({ drillIds: e.target.checked ? [...v.drillIds, d.id] : v.drillIds.filter((id) => id !== d.id) })}
                   />
                 ))}
+                {shownDrills.length < drillChoices.length && (
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="w-fit"
+                    onClick={() => {
+                      // The button goes away, so focus moves to the first drill it revealed.
+                      const first = drillChoices.findIndex((d) => !shownDrills.includes(d));
+                      setOtherDrills(true);
+                      requestAnimationFrame(() => drillBox.current?.querySelectorAll("input")[first]?.focus());
+                    }}
+                  >
+                    Did a different drill? Show {drillChoices.length - shownDrills.length} more
+                  </Button>
+                )}
               </fieldset>
             )}
 

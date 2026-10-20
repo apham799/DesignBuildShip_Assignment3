@@ -81,7 +81,7 @@ function PlayStart() {
       <StepHeading n={2} id="step-2">
         Pick your course
       </StepHeading>
-      <p className="text-body text-muted">Par, yards and handicap fill in for every hole. You&rsquo;ll be on hole 1 in two taps.</p>
+      <p className="text-body text-muted">Five Chicago public courses are built in, so par, yards and handicap fill in for every hole. You&rsquo;ll be on hole 1 in two taps.</p>
       {load.status === "loading" && (
         <div role="status" className="flex flex-col gap-2">
           <span className="sr-only">Loading courses…</span>

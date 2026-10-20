@@ -118,6 +118,8 @@ export function PuttingGreen({ sessions, goal, week, seen, streakWeeks }: { sess
   const holed = shown >= goal;
   const landed = STRIKE_MS + ROLL_MS; // when the ball reaches today's spot
   const [cheer, setCheer] = useState("");
+  // Raising the weekly goal can un-hole the ball, so the announcement goes too.
+  if (cheer && sessions < goal) setCheer("");
 
   useEffect(() => {
     if (from === sessions) return;

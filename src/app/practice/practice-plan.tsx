@@ -1,8 +1,10 @@
 "use client";
 
+import { useRouter, useSearchParams } from "next/navigation";
 import { useEffect, useId, useRef, useState } from "react";
 import { buildPlan, levelLabel, nextLevel, type Challenge, type PlanBlock, type PracticePlan } from "@/data/drills";
-import { challengeBest } from "@/lib/progress";
+import { challengeBest, focusCheck, sessionsSinceFocus } from "@/lib/progress";
+import { FocusLatest, FocusSuggestion } from "@/components/focus-progress";
 import { clearFocus, lockFocus } from "@/lib/actions";
 import { daysAgo } from "@/lib/format";
 import { lastFinishedRound } from "@/lib/recommend";
@@ -43,7 +45,7 @@ function FocusPicker({
 }) {
   const box = useRef<HTMLDivElement>(null);
   useEffect(() => {
-    if (autoFocus) box.current?.querySelector<HTMLInputElement>("input:checked, input")?.focus();
+    if (autoFocus) (box.current?.querySelector<HTMLInputElement>("input:checked") ?? box.current?.querySelector<HTMLInputElement>("input"))?.focus();
   }, [autoFocus]);
   const [main, setMain] = useState<Category | "mixed" | undefined>(initialMain);
   const [also, setAlso] = useState<string[]>(initialAlso);
@@ -180,9 +182,19 @@ export function PracticePlanScreen() {
   const [openCards, setOpenCards] = useState<Record<string, boolean>>({});
   const planListId = useId();
   const [changing, setChanging] = useState(false);
-  // Open/closed is the golfer's choice; cancelling a focus change leaves it open, so
-  // focus can return to the Change focus button.
-  const [whyOpen, setWhyOpen] = useState(false);
+  // "Change focus" on other pages links here with ?change=1, which opens the picker.
+  const params = useSearchParams();
+  const router = useRouter();
+  const wantsChange = params.get("change") === "1";
+  const [changeLink, setChangeLink] = useState(false);
+  if (wantsChange !== changeLink) {
+    setChangeLink(wantsChange);
+    if (wantsChange) setChanging(true);
+  }
+  const stopChanging = () => {
+    setChanging(false);
+    if (wantsChange) router.replace("/practice", { scroll: false });
+  };
   // Only after the golfer changes the time, so nothing is announced on load.
   const [planNews, setPlanNews] = useState("");
   const { whenClosed: changeButton } = useFocusSwap(changing);
@@ -197,7 +209,9 @@ export function PracticePlanScreen() {
   const history = challenge ? challengeBest(store, challenge.id) : undefined;
   const lastRound = lastFinishedRound(store);
   const fromRound = store.focus?.fromRoundId ? store.rounds.find((r) => r.id === store.focus!.fromRoundId) : undefined;
-  const source = fromRound ? `based on your round at ${fromRound.courseName}` : "your pick";
+  const check = focusCheck(store);
+  const sinceLock = sessionsSinceFocus(store);
+  const source = check ? `latest round at ${check.round.courseName}` : fromRound ? `based on your round at ${fromRound.courseName}` : "your pick";
   const logHref = `/practice/log?focus=${focus}&minutes=${minutes}${also.length ? `&also=${also.join(",")}` : ""}`;
 
   return (
@@ -207,25 +221,36 @@ export function PracticePlanScreen() {
           <PageHeader title={store.focus ? `${chosen.map((c) => categoryLabel[c]).join(" + ")} practice` : "Practice plan"} />
 
           {store.focus ? (
-            <details className="group rounded-lg border border-cream-deep bg-cream px-4 py-3" open={whyOpen || changing} onToggle={(e) => setWhyOpen(e.currentTarget.open)}>
-              <summary className="flex cursor-pointer list-none items-center justify-between gap-3 text-body">
-                <span>
-                  <span className="font-semibold">{chosen.map((c) => categoryLabel[c]).join(" + ")}</span> · {source}
-                </span>
-                <span className="shrink-0 text-label text-green underline decoration-green/40 decoration-2 underline-offset-[3px]">Why this plan</span>
-              </summary>
-              <div className="mt-3 flex flex-col gap-3">
-                <p className="text-body">{store.focus.reason}</p>
-                <p className="text-label font-normal text-muted">Locked in {daysAgo(store.focus.lockedAt)}.</p>
-                {changing ? (
-                  <FocusPicker autoFocus initialMain={store.focus.category} initialAlso={also} onDone={() => setChanging(false)} onCancel={() => setChanging(false)} />
-                ) : (
-                  <Button ref={changeButton} variant="secondary" size="sm" className="w-fit" onClick={() => setChanging(true)}>
-                    Change focus
-                  </Button>
-                )}
-              </div>
-            </details>
+            <>
+              <details className="group rounded-lg border border-cream-deep bg-cream px-4 py-3">
+                <summary className="flex cursor-pointer list-none items-center justify-between gap-3 text-body">
+                  <span>
+                    <span className="font-semibold">{chosen.map((c) => categoryLabel[c]).join(" + ")}</span> · {source}
+                  </span>
+                  <span className="shrink-0 text-label text-green underline decoration-green/40 decoration-2 underline-offset-[3px]">Why this plan</span>
+                </summary>
+                <div className="mt-3 flex flex-col gap-3">
+                  {check && <FocusLatest check={check} />}
+                  <p className="text-body">
+                    {check && <span className="font-semibold">When you locked it in: </span>}
+                    {store.focus.reason}
+                  </p>
+                  <p className="text-label font-normal text-muted">
+                    Locked in {daysAgo(store.focus.lockedAt)} · {sinceLock} practice {sinceLock === 1 ? "session" : "sessions"} since.
+                  </p>
+                </div>
+              </details>
+              {check && !changing && <FocusSuggestion check={check} focus={store.focus.category} headingId="plan-title" />}
+              {changing ? (
+                <div className="rounded-lg border border-rule p-4">
+                  <FocusPicker autoFocus initialMain={store.focus.category} initialAlso={also} onDone={stopChanging} onCancel={stopChanging} />
+                </div>
+              ) : (
+                <Button ref={changeButton} variant="secondary" size="sm" className="w-fit" onClick={() => setChanging(true)}>
+                  Change focus
+                </Button>
+              )}
+            </>
           ) : (
             <details className="group rounded-lg border border-cream-deep bg-cream px-4 py-3">
               <summary className="flex cursor-pointer list-none items-center justify-between gap-3 text-body">
@@ -274,7 +299,7 @@ export function PracticePlanScreen() {
         <Column span={7} className="lg:col-start-6 lg:row-span-2 lg:row-start-1">
           <section aria-labelledby="plan-title" className="flex flex-col gap-3">
             <div className="flex items-baseline justify-between gap-3">
-              <h2 id="plan-title" className="text-heading">
+              <h2 id="plan-title" tabIndex={-1} className="text-heading">
                 {store.focus ? "Your" : "Starter"} {minutes}-minute plan
               </h2>
               <button

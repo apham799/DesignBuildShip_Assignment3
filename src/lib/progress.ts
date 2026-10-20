@@ -1,6 +1,6 @@
 import { challengeById, levelFor, levelOrder, type Level } from "@/data/drills";
 import { startOfWeek } from "./format";
-import { hitGreen, leaks, playedHoles, roughStrokes, roundStats } from "./recommend";
+import { hitGreen, leaks, playedHoles, roughStrokes, roundStats, type Leak } from "./recommend";
 import { categoryLabel, type Category, type Round, type Store } from "./types";
 
 // Everything that keeps people coming back is worked out from what they've already
@@ -138,6 +138,37 @@ export function payoff(store: Store, round: Round): Payoff | null {
         ? `${name} slipped this time: ${before} → ${after}. One round is noisy; keep at the plan.`
         : `${name} held steady: ${before} → ${after}. Keep going; it usually takes a few sessions.`;
   return { category: focus.category, before, after, strokes, verdict, text, baseline };
+}
+
+// ---- How the focus is going, from the latest round since it was locked in ----
+
+export type FocusCheck = {
+  round: Round; // the latest finished round played after the focus was locked in
+  pay: Payoff | null;
+  now: Leak | undefined; // the focus area in that round
+  // The focus costs less than a stroke now: time to move on.
+  beaten: boolean;
+  // The area the latest round points to instead, when it's worth switching.
+  next?: Leak;
+};
+
+export function focusCheck(store: Store): FocusCheck | null {
+  const focus = store.focus;
+  if (!focus) return null;
+  const round = finished(store)[0];
+  if (!round || round.id === focus.fromRoundId || new Date(round.startedAt) < new Date(focus.lockedAt)) return null;
+  const all = leaks(roundStats(round));
+  const now = all.find((l) => l.category === focus.category);
+  const beaten = Boolean(now && now.strokes <= 0.5);
+  const other = all.find((l) => l.category !== focus.category && l.strokes > 0.5);
+  const next = other && (beaten || !now || other.strokes > now.strokes + 0.5) ? other : undefined;
+  return { round, pay: payoff(store, round), now, beaten, next };
+}
+
+// Practice logged since the focus was locked in.
+export function sessionsSinceFocus(store: Store) {
+  const focus = store.focus;
+  return focus ? store.practice.filter((p) => new Date(p.date) >= new Date(focus.lockedAt)).length : 0;
 }
 
 // ---- The bucket list ----

@@ -10,6 +10,8 @@ import { isSavingToMemoryOnly, useStore } from "@/lib/storage";
 import { categoryLabel, type Store } from "@/lib/types";
 import { Alert, Badge, ButtonLink, Card, Column, Columns, cx, LoadingCard, Page, TextLink, Toast, ToPar } from "@/components/ui";
 import { BucketListCard, StreakCard } from "@/components/progress-cards";
+import { FocusLatest, FocusSuggestion } from "@/components/focus-progress";
+import { focusCheck, sessionsSinceFocus } from "@/lib/progress";
 import { Onboarding } from "./onboarding";
 
 const feelWord = ["", "Rough", "Meh", "OK", "Good", "Great"];
@@ -65,7 +67,7 @@ function FirstVisit() {
         <ul className="flex flex-col gap-2 text-body">
           {[
             "No account. Everything is saved on this device.",
-            "Course data fills in for you: no scorecard to type.",
+            "Five Chicago public courses are built in, so there's no scorecard to type. Anywhere else, add your own.",
             "Comes back to where you left off, mid-round or mid-week.",
             "Cross things off your golf bucket list as you play and practice.",
           ].map((t) => (
@@ -137,6 +139,8 @@ function WelcomeBack({ store }: { store: Store }) {
   const lastRound = lastFinishedRound(store);
   const lastPractice = store.practice[0];
   const suggestion = !store.focus && lastRound ? recommend(lastRound) : null;
+  const check = focusCheck(store);
+  const sinceLock = sessionsSinceFocus(store);
 
   const since = [lastRound && `last round ${daysAgo(lastRound.startedAt)}`, lastPractice && `last practice ${daysAgo(lastPractice.date)}`].filter(Boolean).join(" · ");
 
@@ -175,13 +179,20 @@ function WelcomeBack({ store }: { store: Store }) {
         {store.focus ? (
           <Card tone="cream" as="section" labelledBy="focus" className="flex flex-col gap-3">
             <Badge tone="brass">Your focus</Badge>
-            <h2 id="focus" className="text-display">
+            <h2 id="focus" tabIndex={-1} className="text-display">
               {[store.focus.category, ...(store.focus.also ?? [])].map((c) => categoryLabel[c]).join(" + ")}
             </h2>
-            <p className="text-body">{store.focus.reason}</p>
-            <ButtonLink href="/practice" className="w-fit">
-              Today&rsquo;s practice plan
-            </ButtonLink>
+            {check ? <FocusLatest check={check} /> : <p className="text-body">{store.focus.reason}</p>}
+            <p className="text-label font-normal text-muted">
+              Locked in {daysAgo(store.focus.lockedAt)} · {sinceLock} practice {sinceLock === 1 ? "session" : "sessions"} since
+            </p>
+            {check && <FocusSuggestion check={check} focus={store.focus.category} headingId="focus" />}
+            <div className="flex flex-wrap gap-3">
+              <ButtonLink href="/practice">Today&rsquo;s practice plan</ButtonLink>
+              <ButtonLink href="/practice?change=1" variant="secondary">
+                Change focus
+              </ButtonLink>
+            </div>
           </Card>
         ) : suggestion ? (
           <Card tone="cream" as="section" labelledBy="focus" className="flex flex-col gap-3">

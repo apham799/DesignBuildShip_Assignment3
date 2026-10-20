@@ -54,3 +54,8 @@ export function toParWords(strokes: number, par: number) {
   if (d === 0) return "even par";
   return `${Math.abs(d)} ${d > 0 ? "over" : "under"} par`;
 }
+
+// "Blue tees", but a custom course's tee is already called "Your tees".
+export function teeLabel(name: string) {
+  return /tees?$/i.test(name.trim()) ? name : `${name} tees`;
+}
