@@ -71,36 +71,40 @@ export function BrandMark() {
 }
 
 // One nav everywhere: a top bar on wide screens, a bottom tab bar on phones.
-export function AppNav() {
-  return <NavBar path={usePathname()} />;
+// extra: small controls for the right end of the top bar (the device data menu).
+export function AppNav({ extra }: { extra?: ReactNode }) {
+  return <NavBar path={usePathname()} extra={extra} />;
 }
 
 // Rendered with path=null while the URL is not known yet (prerendering), so the
 // nav is in the first HTML and the active tab fills in on hydration.
-export function NavBar({ path }: { path: string | null }) {
+export function NavBar({ path, extra }: { path: string | null; extra?: ReactNode }) {
   return (
     <>
       <header className="sticky top-0 z-20 border-b border-cream-deep bg-cream/95 backdrop-blur">
         <div className="mx-auto flex h-16 max-w-[90rem] items-center justify-between px-4 sm:px-6 lg:px-12">
           <BrandMark />
-          <nav aria-label="Main" className="hidden sm:block">
-            <ul className="flex gap-1">
-              {tabs.map((t) => {
-                const active = path !== null && t.match(path);
-                return (
-                  <li key={t.href}>
-                    <Link
-                      href={t.href}
-                      aria-current={active ? "page" : undefined}
-                      className={cx("flex h-10 items-center rounded-md px-3 text-body font-semibold transition-colors", active ? "bg-green text-on-green" : "text-ink hover:bg-cream-deep")}
-                    >
-                      {t.label}
-                    </Link>
-                  </li>
-                );
-              })}
-            </ul>
-          </nav>
+          <div className="flex items-center gap-3">
+            <nav aria-label="Main" className="hidden sm:block">
+              <ul className="flex gap-1">
+                {tabs.map((t) => {
+                  const active = path !== null && t.match(path);
+                  return (
+                    <li key={t.href}>
+                      <Link
+                        href={t.href}
+                        aria-current={active ? "page" : undefined}
+                        className={cx("flex h-10 items-center rounded-md px-3 text-body font-semibold transition-colors", active ? "bg-green text-on-green" : "text-ink hover:bg-cream-deep")}
+                      >
+                        {t.label}
+                      </Link>
+                    </li>
+                  );
+                })}
+              </ul>
+            </nav>
+            {extra}
+          </div>
         </div>
       </header>
 

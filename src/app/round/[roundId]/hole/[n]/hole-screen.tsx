@@ -1,12 +1,13 @@
 "use client";
 
 import Link from "next/link";
+import { useEffect, useRef } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { finishRound, goToHole, saveHoleNote, setCustomPar, updateHole } from "@/lib/actions";
 import { toPar } from "@/lib/format";
 import { playedHoles, roundStats } from "@/lib/recommend";
 import type { FairwayResult, GreenResult, HoleScore, Par, Round } from "@/lib/types";
-import { Alert, Badge, Button, Card, ChoiceGroup, Column, Columns, cx, Page, PageHeader, Stepper, TextArea, TextLink, Tip } from "@/components/ui";
+import { Alert, Button, ChoiceGroup, Column, Columns, cx, Page, PageHeader, Stepper, TextArea, TextLink, Tip } from "@/components/ui";
 import { RoundGate } from "../../round-gate";
 
 const FINISH_EARLY_AFTER = 6;
@@ -33,21 +34,27 @@ export function HoleScreen() {
   );
 }
 
+// One scrollable row on phones (kept scrolled to the current hole), two rows of 9 on desktop.
 function Scorecard({ round, current }: { round: Round; current: number }) {
+  const currentRef = useRef<HTMLAnchorElement>(null);
+  useEffect(() => {
+    currentRef.current?.scrollIntoView({ block: "nearest", inline: "center" });
+  }, [current]);
   return (
-    <nav aria-label="Holes in this round">
-      <ol className="grid grid-cols-9 gap-1.5">
+    <nav aria-label="Holes in this round" className="-mx-4 overflow-x-auto px-4 pb-1 sm:mx-0 sm:px-0 lg:overflow-visible">
+      <ol className="flex gap-1 lg:grid lg:grid-cols-9">
         {round.holes.map((h) => {
           const here = h.number === current;
           const diff = h.strokes - h.par;
           return (
             <li key={h.number}>
               <Link
+                ref={here ? currentRef : undefined}
                 href={`/round/${round.id}/hole/${h.number}`}
                 aria-current={here ? "step" : undefined}
                 aria-label={`Hole ${h.number}${h.played ? `, ${h.strokes} strokes` : ", not played yet"}`}
                 className={cx(
-                  "flex h-11 flex-col items-center justify-center rounded-md border text-label leading-none transition-colors",
+                  "flex h-10 w-10 shrink-0 flex-col items-center justify-center rounded-md border text-label leading-none transition-colors lg:w-auto",
                   here ? "border-green bg-green text-on-green" : h.played ? "border-rule bg-surface text-ink hover:border-ink" : "border-dashed border-edge bg-surface text-muted hover:border-ink",
                 )}
               >
@@ -92,11 +99,17 @@ function HoleForm({ round, hole }: { round: Round; hole: HoleScore }) {
   return (
     <Page>
       <Columns>
-        <Column span={5}>
+        <Column span={5} className="gap-4">
           <PageHeader
             title={`Hole ${hole.number}`}
             step={`${round.courseName} · ${hole.number} of ${total}`}
-            back={hole.number > 1 ? { href: `/round/${round.id}/hole/${hole.number - 1}`, label: `Hole ${hole.number - 1}` } : { href: "/", label: "Home" }}
+            description={
+              <span className="font-semibold text-ink">
+                Par {hole.par}
+                {hole.yards ? ` · ${hole.yards} yds` : ""} · Handicap {hole.handicap}
+              </span>
+            }
+            // No back link: the hole strip below shows where you are and goes to any hole.
             action={
               played.length > 0 ? (
                 <p className="text-right text-label text-muted">
@@ -109,52 +122,33 @@ function HoleForm({ round, hole }: { round: Round; hole: HoleScore }) {
 
           <Scorecard round={round} current={hole.number} />
 
-          <Card tone="cream" className="flex flex-col gap-4">
-            {custom ? (
-              <ChoiceGroup
-                legend="Par for this hole"
-                name="par"
-                value={String(hole.par)}
-                onChange={(v) => setCustomPar(round.courseId, round.id, hole.number, Number(v) as Par)}
-                options={[
-                  { value: "3", label: "Par 3" },
-                  { value: "4", label: "Par 4" },
-                  { value: "5", label: "Par 5" },
-                ]}
-                hint="Saved to your course for next time."
-              />
-            ) : (
-              <dl className="grid grid-cols-3 gap-4">
-                <div>
-                  <dt className="text-label text-muted">Par</dt>
-                  <dd className="text-display">{hole.par}</dd>
-                </div>
-                <div>
-                  <dt className="text-label text-muted">Yards</dt>
-                  <dd className="text-display">{hole.yards ?? "—"}</dd>
-                </div>
-                <div>
-                  <dt className="text-label text-muted">Handicap</dt>
-                  <dd className="text-display">{hole.handicap}</dd>
-                </div>
-              </dl>
-            )}
-            {hole.lastNote && (
-              <div className="rounded-md border border-brass/50 bg-surface p-3">
-                <p className="text-label text-muted">Your note from last time</p>
-                <p className="text-body">{hole.lastNote}</p>
-              </div>
-            )}
-          </Card>
+          {hole.lastNote && (
+            <p className="rounded-md border-l-4 border-brass bg-cream px-3 py-2 text-body">
+              <span className="font-semibold">Last time here:</span> {hole.lastNote}
+            </p>
+          )}
+          {custom && (
+            <ChoiceGroup
+              legend="Par for this hole"
+              name="par"
+              value={String(hole.par)}
+              onChange={(v) => setCustomPar(round.courseId, round.id, hole.number, Number(v) as Par)}
+              options={[
+                { value: "3", label: "3" },
+                { value: "4", label: "4" },
+                { value: "5", label: "5" },
+              ]}
+              hint="Saved to your course for next time."
+            />
+          )}
         </Column>
 
-        <Column span={7} className="lg:col-start-6 lg:row-span-2 lg:row-start-1">
+        <Column span={7} className="gap-4 lg:col-start-6 lg:row-span-2 lg:row-start-1">
           <Tip id="hole" title="Four taps a hole">
-            Set your score and putts, then tap where your tee shot and approach went. The green fills itself in from your score and putts. Everything saves as you go, so you can close the app between
-            shots.
+            Set score and putts, then tap where your shots went. It saves as you go.
           </Tip>
           <form
-            className="flex flex-col gap-6"
+            className="flex flex-col gap-4"
             onSubmit={(e) => {
               e.preventDefault();
               if (isLast) finish();
@@ -162,15 +156,7 @@ function HoleForm({ round, hole }: { round: Round; hole: HoleScore }) {
             }}
           >
             <div className="flex flex-wrap gap-x-8 gap-y-4">
-              <Stepper
-                label="Score"
-                unit="score"
-                value={hole.strokes}
-                min={1}
-                max={15}
-                onChange={(v) => set({ strokes: v, putts: Math.min(hole.putts, v - 1) })}
-                hint={hole.played ? undefined : "Starts at par"}
-              />
+              <Stepper label="Score" unit="score" value={hole.strokes} min={1} max={15} onChange={(v) => set({ strokes: v, putts: Math.min(hole.putts, v - 1) })} />
               <Stepper label="Putts" unit="putts" value={hole.putts} min={0} max={Math.max(0, hole.strokes - 1)} onChange={(v) => set({ putts: v })} />
             </div>
 
@@ -186,9 +172,7 @@ function HoleForm({ round, hole }: { round: Round; hole: HoleScore }) {
                   { value: "right", label: "Right" },
                 ]}
               />
-            ) : (
-              <p className="text-body text-muted">Par 3: no fairway to track.</p>
-            )}
+            ) : null}
 
             <ChoiceGroup
               legend="Green in regulation"
@@ -203,7 +187,7 @@ function HoleForm({ round, hole }: { round: Round; hole: HoleScore }) {
                 { value: "left", label: "Left" },
                 { value: "right", label: "Right" },
               ]}
-              hint={!hole.green && inferredHit ? "Filled in from your score and putts." : !hole.green ? "Missed it? Tap where your approach finished." : undefined}
+              hint={!hole.green && inferredHit ? "Filled in from your score and putts." : undefined}
             />
 
             <details className="group rounded-lg border border-rule p-4" open={hole.penalties > 0 || Boolean(hole.note)}>
@@ -232,26 +216,24 @@ function HoleForm({ round, hole }: { round: Round; hole: HoleScore }) {
               </div>
             </details>
 
-            <div className="flex flex-col gap-3">
+            <div className="flex flex-col gap-2">
               <Button type="submit" size="lg" block>
                 {isLast ? "Finish round" : `Next: hole ${hole.number + 1}`}
               </Button>
-              <p className="flex items-center justify-center gap-2 text-label font-normal text-muted">
-                <Badge tone="green">Saved</Badge> Every tap is saved on this device.
-              </p>
+              <p className="text-center text-label font-normal text-muted">Saved on this device as you go.</p>
             </div>
           </form>
         </Column>
 
         <Column span={5} className="lg:col-start-1 lg:row-start-2">
-          <div className="flex flex-col gap-3 border-t border-rule pt-6">
+          <div className="flex flex-col gap-3 border-t border-rule pt-4">
             {!isLast &&
               (canFinishEarly ? (
                 <Button variant="secondary" onClick={finish}>
                   Finish after this hole
                 </Button>
               ) : (
-                <p className="text-label font-normal text-muted">You can finish early once you&rsquo;ve played {FINISH_EARLY_AFTER} holes.</p>
+                <p className="text-label font-normal text-muted">Finish early unlocks after {FINISH_EARLY_AFTER} holes.</p>
               ))}
             <p className="text-body">
               Didn&rsquo;t track every hole? <TextLink href={`/round/${round.id}/totals`}>Enter totals instead</TextLink>
