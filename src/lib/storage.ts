@@ -11,7 +11,7 @@ import type { Store } from "./types";
 export const STORAGE_KEY = "bucket-list:v1";
 
 export function emptyStore(): Store {
-  return { version: 1, rounds: [], practice: [], focus: null, holeNotes: {}, customCourses: [], weeklyGoal: 2, seenTips: [], checklistDismissed: false, practiceDraft: null };
+  return { version: 1, rounds: [], practice: [], focus: null, holeNotes: {}, customCourses: [], weeklyGoal: 2, seenTips: [], checklistDismissed: false, practiceDraft: null, unlocked: {}, levels: {} };
 }
 
 let cache: { raw: string | null; value: Store } | null = null;

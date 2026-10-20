@@ -7,7 +7,7 @@ import { shortDate } from "@/lib/format";
 import { playedHoles, roundStats } from "@/lib/recommend";
 import { useStore } from "@/lib/storage";
 import { categoryLabel, type Round, type Store } from "@/lib/types";
-import { Badge, Button, ButtonLink, Card, Columns, LoadingCard, Page, PageHeader, ToPar, useFocusSwap } from "@/components/ui";
+import { Badge, Button, ButtonLink, Card, Columns, LoadingCard, Page, PageHeader, TextLink, ToPar, useFocusSwap } from "@/components/ui";
 
 const feelWord = ["", "Rough", "Meh", "OK", "Good", "Great"];
 
@@ -102,7 +102,14 @@ export function HistoryScreen() {
 
   return (
     <Page className="gap-8">
-      <PageHeader title="History" description="Every round and range session saved on this device." />
+      <PageHeader
+        title="History"
+        description={
+          <>
+            Every round and range session saved on this device. <TextLink href="/bucket-list">See your bucket list</TextLink>
+          </>
+        }
+      />
 
       <Columns className="lg:gap-y-8">
         <section aria-labelledby="rounds" className="flex min-w-0 flex-col gap-3 lg:col-span-6">

@@ -137,4 +137,8 @@ export type Store = {
   seenTips: string[];
   checklistDismissed: boolean;
   practiceDraft: PracticeDraft | null;
+  // Achievements crossed off (id → when), and the best challenge level reached
+  // (challenge id → level). "seen" is false until the celebration is dismissed.
+  unlocked: Record<string, { at: string; seen: boolean }>;
+  levels: Record<string, { level: "bronze" | "silver" | "gold"; at: string; seen: boolean }>;
 };

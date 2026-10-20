@@ -3,9 +3,10 @@
 import { useEffect } from "react";
 import { finishRound, lockFocus } from "@/lib/actions";
 import { shortDate } from "@/lib/format";
+import { payoff } from "@/lib/progress";
 import { hitGreen, playedHoles, recommend, roughStrokes, roundStats } from "@/lib/recommend";
 import { categoryLabel, type Round, type Store } from "@/lib/types";
-import { Alert, Badge, Button, ButtonLink, Card, Column, Columns, Page, PageHeader, Ratio, Stat, Tip, ToPar } from "@/components/ui";
+import { Alert, Badge, Button, ButtonLink, Card, Column, Columns, cx, Page, PageHeader, Ratio, Stat, Tip, ToPar } from "@/components/ui";
 import { RoundGate } from "../round-gate";
 
 export function SummaryScreen() {
@@ -54,6 +55,8 @@ function Summary({ round, store }: { round: Round; store: Store }) {
 
   const stats = roundStats(round);
   const rec = recommend(round);
+  // Did practice on the focus show up in this round?
+  const pay = payoff(store, round);
   const lockedHere = store.focus?.fromRoundId === round.id;
   const sameFocus = rec && store.focus?.category === rec.top.category;
 
@@ -84,6 +87,21 @@ function Summary({ round, store }: { round: Round; store: Store }) {
               </p>
             )}
           </Card>
+
+          {pay && (
+            <Card as="section" labelledBy="payoff-title" className={cx("flex flex-col gap-2 border-2", pay.verdict === "better" ? "border-green" : "border-rule")}>
+              <div className="flex items-center gap-2">
+                <Badge tone={pay.verdict === "better" ? "green" : "neutral"}>{pay.verdict === "better" ? "Practice payoff" : "Practice check-in"}</Badge>
+              </div>
+              <h2 id="payoff-title" className="text-heading">
+                {categoryLabel[pay.category]} since you started working on it
+              </h2>
+              <p className="text-body">{pay.text}</p>
+              <p className="text-label font-normal text-muted">
+                Compared with your round at {pay.baseline.courseName} on {shortDate(pay.baseline.startedAt)}.
+              </p>
+            </Card>
+          )}
         </Column>
 
         {rec && (

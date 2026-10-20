@@ -308,7 +308,7 @@ function PracticeLogForm(props: { mode: Mode; initial: Values; store: Store; onS
                 value={v.challenge}
                 onChange={(e) => change({ challenge: e.target.value })}
                 error={errors.challenge}
-                hint={`Out of ${challengeDef.outOf}. Target: ${challengeDef.target}.`}
+                hint={`Out of ${challengeDef.outOf}. Bronze ${challengeDef.levels.bronze} · Silver ${challengeDef.levels.silver} · Gold ${challengeDef.levels.gold}.`}
                 autoComplete="off"
               />
             )}

@@ -1,13 +1,14 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { buildPlan, type PlanBlock, type PracticePlan } from "@/data/drills";
+import { buildPlan, levelLabel, nextLevel, type Challenge, type PlanBlock, type PracticePlan } from "@/data/drills";
+import { challengeBest } from "@/lib/progress";
 import { clearFocus, lockFocus } from "@/lib/actions";
 import { daysAgo } from "@/lib/format";
 import { lastFinishedRound } from "@/lib/recommend";
 import { useStore } from "@/lib/storage";
-import { categoryLabel, type Category, type Store } from "@/lib/types";
-import { Button, ButtonLink, Card, ChoiceGroup, Column, Columns, LoadingCard, MultiChoiceGroup, Page, PageHeader, TextLink, Tip, useFocusSwap } from "@/components/ui";
+import { categoryLabel, type Category } from "@/lib/types";
+import { Badge, Button, ButtonLink, Card, ChoiceGroup, Column, Columns, LoadingCard, MultiChoiceGroup, Page, PageHeader, TextLink, Tip, useFocusSwap } from "@/components/ui";
 
 type Minutes = 15 | 30 | 60;
 
@@ -18,11 +19,6 @@ const areas: Category[] = ["driving", "approach", "shortGame", "putting"];
 function listNames(list: Category[]) {
   const names = list.map((c) => categoryLabel[c].toLowerCase());
   return names.length > 1 ? `${names.slice(0, -1).join(", ")} and ${names[names.length - 1]}` : names[0];
-}
-
-function challengeHistory(store: Store, challengeId: string) {
-  const scores = store.practice.filter((p) => p.challengeScore !== undefined && p.challengeId === challengeId).map((p) => p.challengeScore!);
-  return { best: scores.length ? Math.max(...scores) : undefined, last: scores[0], count: scores.length };
 }
 
 function bringText({ rangeBalls, greenBalls }: PracticePlan["bring"]) {
@@ -105,7 +101,24 @@ function FocusPicker({
   );
 }
 
-function BlockCard({ block, index, history }: { block: PlanBlock; index: number; history?: { best?: number; last?: number; count: number } }) {
+// Where you stand on this challenge and what the next level needs.
+function LevelLine({ challenge, history }: { challenge: Challenge; history: ReturnType<typeof challengeBest> }) {
+  const next = nextLevel(challenge, history.best);
+  return (
+    <div className="flex flex-wrap items-center gap-2">
+      {history.level ? <Badge tone="brass">{levelLabel[history.level]}</Badge> : <Badge>No level yet</Badge>}
+      <p className="text-body font-semibold">
+        {history.count === 0
+          ? `First time: ${challenge.levels.bronze} gets you Bronze.`
+          : next
+            ? `Best ${history.best} of ${challenge.outOf}. ${levelLabel[next.level]} at ${next.score}.`
+            : `Best ${history.best} of ${challenge.outOf}. Gold reached; beat your best.`}
+      </p>
+    </div>
+  );
+}
+
+function BlockCard({ block, index, history }: { block: PlanBlock; index: number; history?: ReturnType<typeof challengeBest> }) {
   return (
     <Card className="flex h-full flex-col gap-2">
       <div className="flex items-baseline justify-between gap-3">
@@ -139,11 +152,7 @@ function BlockCard({ block, index, history }: { block: PlanBlock; index: number;
         </svg>
         {block.repeat}
       </p>
-      {block.kind === "challenge" && history && history.count > 0 && (
-        <p className="text-body font-semibold">
-          Your best: {history.best} of {block.challenge!.outOf} · Last time: {history.last}
-        </p>
-      )}
+      {block.kind === "challenge" && history && <LevelLine challenge={block.challenge!} history={history} />}
     </Card>
   );
 }
@@ -165,7 +174,7 @@ export function PracticePlanScreen() {
   const chosen = store.focus ? [store.focus.category, ...also] : [];
   const plan = buildPlan(focus, minutes, also);
   const challenge = plan.blocks.find((b) => b.kind === "challenge")?.challenge;
-  const history = challenge ? challengeHistory(store, challenge.id) : undefined;
+  const history = challenge ? challengeBest(store, challenge.id) : undefined;
   const lastRound = lastFinishedRound(store);
   const fromRound = store.focus?.fromRoundId ? store.rounds.find((r) => r.id === store.focus!.fromRoundId) : undefined;
   const source = fromRound ? `based on your round at ${fromRound.courseName}` : "your pick";

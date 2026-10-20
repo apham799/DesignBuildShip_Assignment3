@@ -44,6 +44,20 @@
   --shadow-lift: 0 2px 4px rgba(43, 42, 40, 0.12), 0 16px 28px -14px rgba(31, 77, 58, 0.55);
 }
 
+/* A small lift-in for celebrations (skipped with reduced motion via motion-safe:).
+   Movement only: fading opacity would drop text below 4.5:1 contrast while it plays. */
+@keyframes celebrate {
+  from {
+    transform: translateY(-10px) scale(0.97);
+  }
+  60% {
+    transform: translateY(2px) scale(1.01);
+  }
+  to {
+    transform: none;
+  }
+}
+
 /* The four text roles. Use these instead of ad-hoc font sizes. */
 @utility text-display {
   font-family: var(--font-display);

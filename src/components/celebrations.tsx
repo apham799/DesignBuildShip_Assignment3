@@ -1,0 +1,86 @@
+"use client";
+
+import Link from "next/link";
+import { useEffect } from "react";
+import { challengeById, levelLabel, levelOrder } from "@/data/drills";
+import { achievementById, achievements, bestLevels } from "@/lib/progress";
+import { update, useStore } from "@/lib/storage";
+import type { Store } from "@/lib/types";
+import { Button } from "@/components/ui";
+
+type Pending = { key: string; at: string; title: string; detail: string; kind: "achievement" | "level" };
+
+function pending(store: Store): Pending[] {
+  const out: Pending[] = [];
+  for (const [id, u] of Object.entries(store.unlocked)) {
+    const a = achievementById(id);
+    if (a && !u.seen) out.push({ key: `a:${id}`, at: u.at, title: a.title, detail: a.how, kind: "achievement" });
+  }
+  for (const [id, l] of Object.entries(store.levels)) {
+    const c = challengeById(id);
+    if (c && !l.seen) out.push({ key: `l:${id}`, at: l.at, title: `${c.name}: ${levelLabel[l.level]}`, detail: `You scored ${c.levels[l.level]} or more of ${c.outOf}.`, kind: "level" });
+  }
+  return out.sort((a, b) => a.at.localeCompare(b.at));
+}
+
+function markSeen(key: string) {
+  const [kind, id] = key.split(":");
+  update((s) => (kind === "a" ? { ...s, unlocked: { ...s.unlocked, [id]: { ...s.unlocked[id], seen: true } } } : { ...s, levels: { ...s.levels, [id]: { ...s.levels[id], seen: true } } }));
+}
+
+// Watches saved data for newly earned achievements and challenge levels, records
+// them, and shows them one at a time at the top of the page (never over inputs).
+export function Celebrations() {
+  const store = useStore();
+
+  useEffect(() => {
+    if (!store) return;
+    const now = new Date().toISOString();
+    const newAchievements = achievements.filter((a) => !store.unlocked[a.id] && a.done(store));
+    const levels = bestLevels(store);
+    const newLevels = Object.entries(levels).filter(([id, level]) => {
+      const had = store.levels[id]?.level;
+      return !had || levelOrder.indexOf(level) > levelOrder.indexOf(had);
+    });
+    if (!newAchievements.length && !newLevels.length) return;
+    update((s) => ({
+      ...s,
+      unlocked: { ...s.unlocked, ...Object.fromEntries(newAchievements.map((a) => [a.id, { at: now, seen: false }])) },
+      levels: { ...s.levels, ...Object.fromEntries(newLevels.map(([id, level]) => [id, { level, at: now, seen: false }])) },
+    }));
+  }, [store]);
+
+  const queue = store ? pending(store) : [];
+  const current = queue[0];
+
+  return (
+    <div role="status" aria-live="polite" className="empty:hidden">
+      {current && (
+        <section aria-label="Celebration" className="mb-6 flex items-start gap-3 rounded-lg border-2 border-brass bg-cream p-4 shadow-lift motion-safe:animate-[celebrate_400ms_ease-out]">
+          <svg viewBox="0 0 24 24" className="mt-0.5 size-7 shrink-0 text-green" aria-hidden fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+            <path d="M7 21 V3 L17 7 L7 11" fill="currentColor" fillOpacity="0.15" />
+            <path d="M4 21 H12" />
+          </svg>
+          <div className="flex flex-1 flex-col gap-1">
+            <p className="text-label text-muted">{current.kind === "level" ? "Level up" : "Crossed off your bucket list"}</p>
+            <p className="text-heading">{current.title}</p>
+            <p className="text-body">{current.detail}</p>
+            {queue.length > 1 && <p className="text-label font-normal text-muted">And {queue.length - 1} more to celebrate.</p>}
+            <div className="mt-2 flex flex-wrap items-center gap-4">
+              <Button size="sm" onClick={() => markSeen(current.key)}>
+                {queue.length > 1 ? "Nice, next" : "Nice!"}
+              </Button>
+              <Link
+                href="/bucket-list"
+                onClick={() => queue.forEach((q) => markSeen(q.key))}
+                className="text-label text-green underline decoration-green/40 decoration-2 underline-offset-[3px] hover:decoration-green"
+              >
+                See your bucket list
+              </Link>
+            </div>
+          </div>
+        </section>
+      )}
+    </div>
+  );
+}

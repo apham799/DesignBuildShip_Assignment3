@@ -22,10 +22,16 @@ export type Challenge = {
   name: string;
   how: string;
   outOf: number;
+  // The usual target is Silver; Bronze and Gold sit either side so there's always a next level.
   target: number;
+  levels: Record<Level, number>;
   // Range challenges use one ball per attempt; green challenges reuse `carry` balls.
   carry?: number;
 };
+
+export type Level = "bronze" | "silver" | "gold";
+export const levelOrder: Level[] = ["bronze", "silver", "gold"];
+export const levelLabel: Record<Level, string> = { bronze: "Bronze", silver: "Silver", gold: "Gold" };
 
 export const drills: Drill[] = [
   {
@@ -103,7 +109,15 @@ export const drills: Drill[] = [
 ];
 
 export const challenges: Record<Category | "mixed", Challenge> = {
-  driving: { id: "fairway-finder", category: "driving", name: "Fairway finder", how: "10 drives at your fairway gates. Count how many finish inside.", outOf: 10, target: 6 },
+  driving: {
+    id: "fairway-finder",
+    category: "driving",
+    name: "Fairway finder",
+    how: "10 drives at your fairway gates. Count how many finish inside.",
+    outOf: 10,
+    target: 6,
+    levels: { bronze: 4, silver: 6, gold: 8 },
+  },
   approach: {
     id: "green-circle",
     category: "approach",
@@ -111,9 +125,28 @@ export const challenges: Record<Category | "mixed", Challenge> = {
     how: "10 shots from mixed distances. Count how many finish within about 15 yards of the target, roughly a green.",
     outOf: 10,
     target: 5,
+    levels: { bronze: 3, silver: 5, gold: 7 },
   },
-  shortGame: { id: "save-nine", category: "shortGame", name: "Save nine", how: "Play the up-and-down nine once. Count your saves.", outOf: 9, target: 3, carry: 9 },
-  putting: { id: "twenty-threes", category: "putting", name: "Twenty threes", how: "20 putts from 3 feet with 3 balls, moving around the hole. Count the makes.", outOf: 20, target: 15, carry: 3 },
+  shortGame: {
+    id: "save-nine",
+    category: "shortGame",
+    name: "Save nine",
+    how: "Play the up-and-down nine once. Count your saves.",
+    outOf: 9,
+    target: 3,
+    levels: { bronze: 2, silver: 3, gold: 5 },
+    carry: 9,
+  },
+  putting: {
+    id: "twenty-threes",
+    category: "putting",
+    name: "Twenty threes",
+    how: "20 putts from 3 feet with 3 balls, moving around the hole. Count the makes.",
+    outOf: 20,
+    target: 15,
+    levels: { bronze: 12, silver: 15, gold: 18 },
+    carry: 3,
+  },
   mixed: {
     id: "nine-hole-range",
     category: "mixed",
@@ -121,8 +154,22 @@ export const challenges: Record<Category | "mixed", Challenge> = {
     how: "Play 9 imaginary holes: tee shot, then the approach that hole would leave. Count the greens you'd have hit.",
     outOf: 9,
     target: 3,
+    levels: { bronze: 2, silver: 3, gold: 5 },
   },
 };
+
+export const challengeById = (id: string) => Object.values(challenges).find((c) => c.id === id);
+
+// The highest level a score reaches, if any.
+export function levelFor(challenge: Challenge, score: number): Level | null {
+  return [...levelOrder].reverse().find((l) => score >= challenge.levels[l]) ?? null;
+}
+
+// The next level up from a best score, and the score it needs.
+export function nextLevel(challenge: Challenge, best: number | undefined): { level: Level; score: number } | null {
+  const next = levelOrder.find((l) => best === undefined || best < challenge.levels[l]);
+  return next ? { level: next, score: challenge.levels[next] } : null;
+}
 
 // Extra advice when the round showed a clear miss pattern.
 export const missTips: Partial<Record<Category, Partial<Record<string, string>>>> = {
@@ -234,7 +281,7 @@ export function buildPlan(focus: Category | "mixed", minutes: 15 | 30 | 60, also
       title: challenge.name,
       minutes: time.challenge,
       where: challenge.carry ? (focus === "shortGame" ? "Short-game area" : "Putting green") : "Range",
-      steps: [challenge.how, `Target: ${challenge.target} of ${challenge.outOf}.`],
+      steps: [challenge.how, `Levels (out of ${challenge.outOf}): Bronze ${challenge.levels.bronze} · Silver ${challenge.levels.silver} · Gold ${challenge.levels.gold}.`],
       repeat: "Play it once and log your score.",
       // The nine-hole range round is two shots a hole.
       rangeBalls: challenge.carry ? undefined : challenge.outOf * (focus === "mixed" ? 2 : 1),

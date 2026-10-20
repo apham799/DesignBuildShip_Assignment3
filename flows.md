@@ -117,22 +117,27 @@ flowchart TD
 
 ```mermaid
 flowchart TD
-  open(["Open Bucket List"]) --> wb["/ · Home, Welcome back<br/>days since last round or practice"]
+  open(["Open Bucket List"]) --> wb["/ · Home, Welcome back<br/>Start a round or Resume · Log practice"]
+  new{"Anything newly earned?"} -- "Yes" --> party["Celebration at the top of the page<br/>Crossed off: Birdie! · Level up: Gold<br/>Nice, next · See your bucket list"]
+  open --> new
   wb --> inprog{"Round in progress?"}
   inprog -- "Yes" --> resume["Resume · Hole 7 at Jackson Park"]
   resume --> hole(["Go to Hole n"])
-  wb --> focus["Focus card<br/>Putting cost about 3 strokes last round"]
-  focus --> plan(["Go to Practice plan"])
-  wb --> checklist["Getting started<br/>play holes → lock a focus → log practice<br/>ticks itself off · Hide this"]
-  wb --> note["Last practice note<br/>lag putts good, short ones pushed right"]
-  wb --> goal["Weekly goal · 1 of 2 sessions"]
-  wb --> hist["/history · rounds + practice sessions<br/>Edit · Delete on each · download my data"]
-  wb --> again["Play the same course again"]
-  again --> notes["Hole screens show your notes<br/>custom pars already filled in"]
+  wb --> focus["Focus card<br/>Putting cost roughly 3 strokes last round"]
+  focus --> plan(["Go to Practice plan<br/>challenge shows your level and the next one"])
+  wb --> streakc["Practice streak · weeks in a row at the goal<br/>8-week dots · one mulligan a month"]
+  wb --> bucket["Your bucket list · 10 of 20 crossed off<br/>up next: 3 to go for"]
+  bucket --> list["/bucket-list · rounds, practice, habits<br/>+ Bronze / Silver / Gold challenge levels"]
+  wb --> checklist["Getting started<br/>ticks itself off · Hide this"]
+  wb --> note["Last practice note"]
+  wb --> hist["/history · Edit · Delete · download my data"]
+  wb --> again["Play again"]
+  again --> notes["Hole notes from last time<br/>custom pars filled in"]
+  again --> pay["Next summary: practice payoff<br/>2.2 → 1.8 putts a hole, roughly 4 strokes back"]
 
-  menu["Top bar · Reset"] -- "Reset to a first visit" --> erase[("Device data erased")]
+  menu["Corner · Reset"] -- "Reset to a first visit" --> erase[("Device data erased")]
   erase --> first(["First visit again"])
-  menu -- "Load a sample week" --> sample[("Sample round, focus and practice")]
+  menu -- "Load a sample week" --> sample[("Two rounds, a focus, practice that levels up")]
   sample --> wb
 ```
 
@@ -172,3 +177,8 @@ I asked the agent what steps, states and errors it would add, then chose which t
 | "Bring:" instead of a ball count | Range balls get used up; putting and chipping reuse a few balls |
 | Edit and Delete in History | Fixing a mistyped score or note matters more than another dashboard card |
 | End round after any hole | Rounds get cut short (weather, daylight, a call). One confirm step stops stray taps, and summaries under 6 holes say they're a first hint |
+| A golf bucket list (20 achievements) | Leans into the name: goals that tick themselves off from what you log, with "up next" so there's always a target |
+| Weekly streak with a monthly mulligan | Weeks, not days, and one forgiven week a month, so the streak motivates instead of guilting |
+| Bronze / Silver / Gold challenge levels | From Break X: every session has a next level to beat |
+| Practice → round payoff | Shows whether practice showed up in the next round, which closes the loop the app is built on |
+| Celebrations at the top of the page | New achievements and level-ups get a moment, without covering inputs; announced to screen readers |

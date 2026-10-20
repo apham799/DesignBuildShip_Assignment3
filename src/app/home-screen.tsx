@@ -9,6 +9,7 @@ import { lastFinishedRound, playedHoles, recommend, roundStats } from "@/lib/rec
 import { isSavingToMemoryOnly, useStore } from "@/lib/storage";
 import { categoryLabel, type Store } from "@/lib/types";
 import { Alert, Badge, ButtonLink, Card, Column, Columns, cx, LoadingCard, Page, TextLink, Toast, ToPar } from "@/components/ui";
+import { BucketListCard, StreakCard } from "@/components/progress-cards";
 import { Onboarding } from "./onboarding";
 
 const feelWord = ["", "Rough", "Meh", "OK", "Good", "Great"];
@@ -62,7 +63,12 @@ function FirstVisit() {
           <p className="text-label font-normal text-muted">One thing to work on, with the reason, after every round.</p>
         </Card>
         <ul className="flex flex-col gap-2 text-body">
-          {["No account. Everything is saved on this device.", "Course data fills in for you: no scorecard to type.", "Comes back to where you left off, mid-round or mid-week."].map((t) => (
+          {[
+            "No account. Everything is saved on this device.",
+            "Course data fills in for you: no scorecard to type.",
+            "Comes back to where you left off, mid-round or mid-week.",
+            "Cross things off your golf bucket list as you play and practice.",
+          ].map((t) => (
             <li key={t} className="flex gap-2">
               <svg viewBox="0 0 16 16" className="mt-1 size-4 shrink-0 text-green" aria-hidden fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round">
                 <path d="M3.5 8.5 L6.5 11.5 L12.5 4.5" />
@@ -130,8 +136,6 @@ function WelcomeBack({ store }: { store: Store }) {
   const current = inProgressRound(store);
   const lastRound = lastFinishedRound(store);
   const lastPractice = store.practice[0];
-  const thisWeek = sessionsThisWeek(store.practice);
-  const goal = store.weeklyGoal;
   const suggestion = !store.focus && lastRound ? recommend(lastRound) : null;
 
   const since = [lastRound && `last round ${daysAgo(lastRound.startedAt)}`, lastPractice && `last practice ${daysAgo(lastPractice.date)}`].filter(Boolean).join(" · ");
@@ -206,20 +210,8 @@ function WelcomeBack({ store }: { store: Store }) {
       </Column>
 
       <Column span={5} className="lg:pt-2">
-        <Card as="section" labelledBy="week" className="flex flex-col gap-3">
-          <h2 id="week" className="text-heading">
-            This week
-          </h2>
-          <p className="text-body">
-            <span className="font-display text-2xl font-semibold">{thisWeek}</span> of {goal} practice sessions
-          </p>
-          <div aria-hidden className="flex gap-1.5">
-            {Array.from({ length: Math.max(goal, thisWeek) }, (_, i) => (
-              <span key={i} className={cx("h-2 flex-1 rounded-full", i < thisWeek ? "bg-green" : "bg-cream-deep")} />
-            ))}
-          </div>
-          <p className="text-label font-normal text-muted">{thisWeek >= goal ? "Goal met. Anything more is a bonus." : "Weeks start on Monday."}</p>
-        </Card>
+        <StreakCard store={store} />
+        <BucketListCard store={store} />
 
         <Card as="section" labelledBy="last-practice" className="flex flex-col gap-2">
           <h2 id="last-practice" className="text-heading">

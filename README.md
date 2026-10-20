@@ -124,22 +124,27 @@ flowchart TD
 
 ```mermaid
 flowchart TD
-  open(["Open Bucket List"]) --> wb["/ · Home, Welcome back<br/>days since last round or practice"]
+  open(["Open Bucket List"]) --> wb["/ · Home, Welcome back<br/>Start a round or Resume · Log practice"]
+  new{"Anything newly earned?"} -- "Yes" --> party["Celebration at the top of the page<br/>Crossed off: Birdie! · Level up: Gold<br/>Nice, next · See your bucket list"]
+  open --> new
   wb --> inprog{"Round in progress?"}
   inprog -- "Yes" --> resume["Resume · Hole 7 at Jackson Park"]
   resume --> hole(["Go to Hole n"])
-  wb --> focus["Focus card<br/>Putting cost about 3 strokes last round"]
-  focus --> plan(["Go to Practice plan"])
-  wb --> checklist["Getting started<br/>play holes → lock a focus → log practice<br/>ticks itself off · Hide this"]
-  wb --> note["Last practice note<br/>lag putts good, short ones pushed right"]
-  wb --> goal["Weekly goal · 1 of 2 sessions"]
-  wb --> hist["/history · rounds + practice sessions<br/>Edit · Delete on each · download my data"]
-  wb --> again["Play the same course again"]
-  again --> notes["Hole screens show your notes<br/>custom pars already filled in"]
+  wb --> focus["Focus card<br/>Putting cost roughly 3 strokes last round"]
+  focus --> plan(["Go to Practice plan<br/>challenge shows your level and the next one"])
+  wb --> streakc["Practice streak · weeks in a row at the goal<br/>8-week dots · one mulligan a month"]
+  wb --> bucket["Your bucket list · 10 of 20 crossed off<br/>up next: 3 to go for"]
+  bucket --> list["/bucket-list · rounds, practice, habits<br/>+ Bronze / Silver / Gold challenge levels"]
+  wb --> checklist["Getting started<br/>ticks itself off · Hide this"]
+  wb --> note["Last practice note"]
+  wb --> hist["/history · Edit · Delete · download my data"]
+  wb --> again["Play again"]
+  again --> notes["Hole notes from last time<br/>custom pars filled in"]
+  again --> pay["Next summary: practice payoff<br/>2.2 → 1.8 putts a hole, roughly 4 strokes back"]
 
-  menu["Top bar · Reset"] -- "Reset to a first visit" --> erase[("Device data erased")]
+  menu["Corner · Reset"] -- "Reset to a first visit" --> erase[("Device data erased")]
   erase --> first(["First visit again"])
-  menu -- "Load a sample week" --> sample[("Sample round, focus and practice")]
+  menu -- "Load a sample week" --> sample[("Two rounds, a focus, practice that levels up")]
   sample --> wb
 ```
 
