@@ -6,7 +6,7 @@ Bucket List is a small golf tool for two rhythms: the weekend round and the week
 
 > I tap in each hole as I play → the summary shows what cost me the most strokes → next time I'm at the range it gives me a plan for that → I log how practice went, and it's all waiting when I come back.
 
-- **Live:** https://design-build-ship-assignment3-chi.vercel.app/
+- **Live site:** [design-build-ship-assignment3-chi.vercel.app](https://design-build-ship-assignment3-chi.vercel.app/)
 - **Stack:** Next.js, Tailwind CSS and `localStorage`. No accounts, database or external APIs. The course "database" is sample data bundled with the app.
 
 ## Flows
