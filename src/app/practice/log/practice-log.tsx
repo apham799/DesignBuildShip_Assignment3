@@ -68,6 +68,9 @@ export function PracticeLogScreen() {
   const query = params.toString();
   // The choice belongs to this exact link; a new plan link asks again.
   const [choice, setChoice] = useState<{ query: string; use: "draft" | "plan" | "fresh" } | null>(null);
+  // Once the form is open for a link, the choice screen can't replace it: whatever the
+  // draft becomes while you type is this session, so the question is only asked on arrival.
+  const [formOpenFor, setFormOpenFor] = useState<string | null>(null);
   if (!store) return <LoadingCard label="Loading form…" />;
 
   const editId = params.get("edit");
@@ -92,7 +95,7 @@ export function PracticeLogScreen() {
   const draftMatchesPlan = Boolean(draft && plan && (draftIsThisSession || (draft.focus === plan.focus && draft.plannedMinutes === plan.minutes)));
 
   // A draft and a different plan: ask which one to log.
-  if (draft && plan && !draftMatchesPlan && !use) {
+  if (draft && plan && !draftMatchesPlan && !use && formOpenFor !== query) {
     return (
       <Page>
         <PageHeader title="Log your practice" back={{ href: "/practice", label: "Practice plan" }} />
@@ -123,6 +126,8 @@ export function PracticeLogScreen() {
     );
   }
 
+  // Remember that the form is showing for this link (React's "adjust state while rendering" pattern).
+  if (formOpenFor !== query) setFormOpenFor(query);
   const resumeDraft = Boolean(draft && use !== "fresh" && use !== "plan" && (use === "draft" || draftMatchesPlan || !plan));
   const initial = resumeDraft ? draft! : plan ? fromPlan(plan) : blank(store.focus?.category);
   const source = resumeDraft ? "draft" : plan ? "plan" : "blank";
