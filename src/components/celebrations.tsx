@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect } from "react";
+import { useEffect, useRef } from "react";
 import { Badge } from "@/components/badges";
 import { challengeById, levelLabel, levelOrder, type Level } from "@/data/drills";
 import { achievementById, achievements, bestLevels } from "@/lib/progress";
@@ -53,10 +53,29 @@ export function Celebrations() {
   }, [store]);
 
   const queue = store ? pending(store) : [];
+
+  // Dismissing swaps in the next banner, which would drop keyboard focus to the page.
+  // After a dismissal, focus goes to the next celebration's button, or once they're all
+  // done, to the first control in the page content.
+  const wrapper = useRef<HTMLDivElement>(null);
+  const refocus = useRef(false);
+  useEffect(() => {
+    if (!refocus.current) return;
+    refocus.current = false;
+    const next = wrapper.current?.querySelector<HTMLElement>("button");
+    if (next) return next.focus();
+    const main = document.getElementById("main");
+    const first = [...(main?.querySelectorAll<HTMLElement>("a[href], button, input, select, textarea, summary") ?? [])].find((el) => !wrapper.current?.contains(el) && el.offsetParent !== null);
+    first?.focus();
+  });
+  const dismiss = (key: string) => {
+    refocus.current = true;
+    markSeen(key);
+  };
   const current = queue[0];
 
   return (
-    <div role="status" aria-live="polite" className="empty:hidden">
+    <div ref={wrapper} role="status" aria-live="polite" className="empty:hidden">
       {current && (
         <section
           key={current.key}
@@ -70,7 +89,7 @@ export function Celebrations() {
             <p className="text-body">{current.detail}</p>
             {queue.length > 1 && <p className="text-label font-normal text-muted">And {queue.length - 1} more to celebrate.</p>}
             <div className="mt-2 flex flex-wrap items-center gap-4">
-              <Button size="sm" onClick={() => markSeen(current.key)}>
+              <Button size="sm" onClick={() => dismiss(current.key)}>
                 {queue.length > 1 ? "Nice, next" : "Nice!"}
               </Button>
               <Link

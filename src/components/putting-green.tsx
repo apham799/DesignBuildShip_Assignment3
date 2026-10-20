@@ -133,11 +133,18 @@ export function PuttingGreen({ sessions, goal, week, seen, streakWeeks }: { sess
     };
   }, [from, sessions, goal, week, streakWeeks]);
 
+  // What the picture shows, for screen readers.
+  const greenLabel =
+    sessions >= goal
+      ? `Putting green: the ball is in the hole. ${sessions} of ${goal} practice sessions this week.`
+      : sessions === 0
+        ? `Putting green: the ball is at the start. 0 of ${goal} practice sessions this week.`
+        : `Putting green: the ball is ${Math.round((sessions / goal) * 100)}% of the way to the hole. ${sessions} of ${goal} practice sessions this week.`;
   const x = xFor(shown, goal);
   const strikeX = xFor(from, goal) - START; // the putter stands where the ball starts
   return (
     <>
-      <svg viewBox="0 0 320 84" className="h-auto w-full overflow-visible" aria-hidden>
+      <svg viewBox="0 0 320 84" className="h-auto w-full overflow-visible" role="img" aria-label={greenLabel}>
         <style>{keyframes}</style>
         {/* the green */}
         <ellipse cx="160" cy="50" rx="156" ry="30" fill="#e2eddb" stroke="#2f6b4f" strokeOpacity="0.35" strokeWidth="1.5" />

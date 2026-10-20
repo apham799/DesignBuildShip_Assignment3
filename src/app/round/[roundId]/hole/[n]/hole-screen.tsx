@@ -16,6 +16,16 @@ export function HoleScreen() {
   return (
     <RoundGate>
       {(round) => {
+        // A round saved as totals has no hole-by-hole data to show or edit.
+        if (round.mode === "totals") {
+          return (
+            <div className="flex flex-col gap-6">
+              <PageHeader title="Saved as totals" step={round.courseName} back={{ href: `/round/${round.id}/summary`, label: "Back to the summary" }} />
+              <Alert title={`This round was saved as totals for ${round.holes.length} holes`}>There are no single holes to edit. Change the totals instead.</Alert>
+              <TextLink href={`/round/${round.id}/totals`}>Edit totals</TextLink>
+            </div>
+          );
+        }
         const hole = round.holes.find((h) => h.number === number);
         if (!hole) {
           return (

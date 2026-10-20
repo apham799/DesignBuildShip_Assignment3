@@ -33,6 +33,8 @@ function TotalsForm({ round }: { round: Round }) {
   const fairwaysPossible = holes.filter((h) => h.par !== 3).length;
   const par = holes.reduce((s, h) => s + h.par, 0);
   const tracked = playedHoles(round).length;
+  // Already saved as totals: this is an edit, not a switch away from hole-by-hole entry.
+  const editingTotals = round.mode === "totals";
 
   const field = (name: Field) => ({
     value: values[name],
@@ -103,10 +105,15 @@ function TotalsForm({ round }: { round: Round }) {
       <Columns>
         <Column span={5}>
           <PageHeader
-            title="Enter your totals"
+            title={editingTotals ? "Edit totals" : "Enter your totals"}
             step={round.courseName}
-            back={{ href: `/round/${round.id}/hole/${round.currentHole}`, label: `Back to hole ${round.currentHole}` }}
-            description="For when you didn't track every hole. You'll still get a practice focus."
+            // A totals round has no holes to go back to; return to its summary instead.
+            back={
+              editingTotals
+                ? { href: `/round/${round.id}/summary`, label: "Back to the summary" }
+                : { href: `/round/${round.id}/hole/${round.currentHole}`, label: `Back to hole ${round.currentHole}` }
+            }
+            description={editingTotals ? `Editing totals for ${round.holes.length} holes. Saving updates the summary.` : "For when you didn't track every hole. You'll still get a practice focus."}
           />
           <Card tone="cream" className="hidden flex-col gap-2 lg:flex">
             <h2 className="text-heading">What counts</h2>
@@ -127,7 +134,7 @@ function TotalsForm({ round }: { round: Round }) {
           </Card>
         </Column>
         <Column span={7}>
-          {tracked > 0 && <Alert title={`You tracked ${tracked} ${tracked === 1 ? "hole" : "holes"} one by one`}>Saving totals replaces those holes with these numbers.</Alert>}
+          {!editingTotals && tracked > 0 && <Alert title={`You tracked ${tracked} ${tracked === 1 ? "hole" : "holes"} one by one`}>Saving totals replaces those holes with these numbers.</Alert>}
           {errorCount > 1 && (
             <Alert tone="error" title={`${errorCount} fields need fixing`}>
               Each one says what to change.

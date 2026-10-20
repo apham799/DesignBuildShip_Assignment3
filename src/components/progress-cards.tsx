@@ -15,10 +15,25 @@ const dotStyle = {
   before: "bg-cream border-cream-deep",
 } as const;
 
+function weekWords(d: { state: string; sessions: number }) {
+  const n = `${d.sessions} ${d.sessions === 1 ? "session" : "sessions"}`;
+  switch (d.state) {
+    case "met":
+      return `goal met, ${n}`;
+    case "mulligan":
+      return `missed, saved by a mulligan, ${n}`;
+    case "missed":
+      return `missed, ${n}`;
+    case "in-progress":
+      return `this week, ${n} so far`;
+    default:
+      return "before you started";
+  }
+}
+
 // Weeks in a row at the practice goal. Forgiving: one missed week a month is a mulligan.
 export function StreakCard({ store }: { store: Store }) {
   const s = streak(store);
-  const counts = s.dots.reduce<Record<string, number>>((acc, d) => ({ ...acc, [d.state]: (acc[d.state] ?? 0) + 1 }), {});
   const toGo = Math.max(0, s.goal - s.thisWeek);
   // This week's Monday, as the key for where the putt was last shown.
   const week = s.dots[s.dots.length - 1].start.toISOString();
@@ -35,18 +50,35 @@ export function StreakCard({ store }: { store: Store }) {
       <PuttingGreen sessions={s.thisWeek} goal={s.goal} week={week} seen={store.streakSeen?.week === week ? store.streakSeen.sessions : 0} streakWeeks={s.weeks} />
       <p className="text-body">
         This week: <span className="font-semibold">{s.thisWeek}</span> of {s.goal} sessions.{" "}
-        {s.metThisWeek ? <span className="font-semibold text-success">Holed it! The streak is safe.</span> : `${toGo} more ${toGo === 1 ? "putt" : "putts"} to hole it this week.`}
+        {s.metThisWeek ? <span className="font-semibold text-success">Holed it! The streak is safe.</span> : `${toGo} more practice ${toGo === 1 ? "session" : "sessions"} to hole it this week.`}
       </p>
-      <ol aria-hidden className="grid grid-cols-8 gap-1.5">
-        {s.dots.map((d) => (
-          <li key={d.start.toISOString()} className={cx("flex h-7 items-center justify-center rounded-full border-2 text-[0.7rem] font-semibold", dotStyle[d.state])}>
-            {d.state === "mulligan" ? "M" : d.state === "met" ? <span className="text-on-green">✓</span> : ""}
-          </li>
-        ))}
-      </ol>
-      <p className="sr-only">
-        Last 8 weeks: {counts.met ?? 0} met, {counts.mulligan ?? 0} saved by a mulligan, {counts.missed ?? 0} missed, this week in progress.
-      </p>
+      <div className="flex flex-col gap-1.5">
+        <p id="streak-weeks" className="text-label text-ink">
+          Last 8 weeks
+        </p>
+        {/* One dot per week, oldest first; each says what happened that week. */}
+        <ol aria-labelledby="streak-weeks" className="grid grid-cols-8 gap-1.5">
+          {s.dots.map((d) => (
+            <li key={d.start.toISOString()} className={cx("flex h-7 items-center justify-center rounded-full border-2 text-[0.7rem] font-semibold", dotStyle[d.state])}>
+              <span aria-hidden>{d.state === "mulligan" ? "M" : d.state === "met" ? <span className="text-on-green">✓</span> : ""}</span>
+              <span className="sr-only">
+                Week of {d.start.toLocaleDateString(undefined, { month: "short", day: "numeric" })}: {weekWords(d)}
+              </span>
+            </li>
+          ))}
+        </ol>
+        <p aria-hidden className="flex flex-wrap gap-x-3 gap-y-1 text-label font-normal text-muted">
+          <span className="flex items-center gap-1">
+            <span className="grid size-3.5 place-items-center rounded-full bg-green text-[0.55rem] text-on-green">✓</span> goal met
+          </span>
+          <span className="flex items-center gap-1">
+            <span className="grid size-3.5 place-items-center rounded-full border border-brass bg-brass/30 text-[0.55rem] text-ink">M</span> mulligan
+          </span>
+          <span className="flex items-center gap-1">
+            <span className="size-3.5 rounded-full border border-dashed border-green" /> this week
+          </span>
+        </p>
+      </div>
       <p className="text-label font-normal text-muted">
         {s.mulliganUsedThisMonth ? "Mulligan used this month. Next month you get a new one." : "Miss a week? One mulligan a month keeps your streak alive."}
       </p>

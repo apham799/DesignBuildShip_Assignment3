@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useId, useRef, useState } from "react";
 import { buildPlan, levelLabel, nextLevel, type Challenge, type PlanBlock, type PracticePlan } from "@/data/drills";
 import { challengeBest } from "@/lib/progress";
 import { clearFocus, lockFocus } from "@/lib/actions";
@@ -178,6 +178,7 @@ export function PracticePlanScreen() {
   const [minutes, setMinutes] = useState<Minutes>(30);
   // Which plan cards are open (by title). Everything starts folded.
   const [openCards, setOpenCards] = useState<Record<string, boolean>>({});
+  const planListId = useId();
   const [changing, setChanging] = useState(false);
   // Open/closed is the golfer's choice; cancelling a focus change leaves it open, so
   // focus can return to the Change focus button.
@@ -191,6 +192,7 @@ export function PracticePlanScreen() {
   const also = store.focus?.also ?? [];
   const chosen = store.focus ? [store.focus.category, ...also] : [];
   const plan = buildPlan(focus, minutes, also);
+  const allStepsOpen = plan.blocks.every((b) => openCards[b.title]);
   const challenge = plan.blocks.find((b) => b.kind === "challenge")?.challenge;
   const history = challenge ? challengeBest(store, challenge.id) : undefined;
   const lastRound = lastFinishedRound(store);
@@ -277,16 +279,16 @@ export function PracticePlanScreen() {
               </h2>
               <button
                 type="button"
-                onClick={() => {
-                  const allOpen = plan.blocks.every((b) => openCards[b.title]);
-                  setOpenCards(Object.fromEntries(plan.blocks.map((b) => [b.title, !allOpen])));
-                }}
+                // Opens or closes every card in the plan list below.
+                aria-expanded={allStepsOpen}
+                aria-controls={planListId}
+                onClick={() => setOpenCards(Object.fromEntries(plan.blocks.map((b) => [b.title, !allStepsOpen])))}
                 className="shrink-0 rounded-sm text-label text-green underline decoration-green/40 decoration-2 underline-offset-[3px] hover:decoration-green"
               >
-                {plan.blocks.every((b) => openCards[b.title]) ? "Hide all steps" : "Show all steps"}
+                {allStepsOpen ? "Hide all steps" : "Show all steps"}
               </button>
             </div>
-            <ol className="grid items-start gap-3 xl:grid-cols-2">
+            <ol id={planListId} className="grid items-start gap-3 xl:grid-cols-2">
               {plan.blocks.map((b, i) => (
                 <li key={`${b.kind}-${b.title}`} className={b.kind === "challenge" || (plan.blocks.length % 2 === 0 && b.kind === "warmup") ? "xl:col-span-2" : undefined}>
                   <BlockCard
