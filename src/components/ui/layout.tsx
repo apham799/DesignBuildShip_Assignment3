@@ -10,7 +10,7 @@ export function Page({ children, className }: { children: ReactNode; className?:
 }
 
 export function Columns({ children, className }: { children: ReactNode; className?: string }) {
-  return <div className={cx("flex flex-col gap-6 lg:grid lg:grid-cols-12 lg:items-start lg:gap-x-12 lg:gap-y-6", className)}>{children}</div>;
+  return <div className={cx("flex flex-col gap-6 lg:grid lg:grid-cols-12 lg:grid-rows-[auto_1fr] lg:items-start lg:gap-x-12 lg:gap-y-6", className)}>{children}</div>;
 }
 
 const spans = {
