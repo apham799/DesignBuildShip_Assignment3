@@ -18,6 +18,22 @@ Sources: [account](https://help.18birdies.com/article/15-creating-a-new-account)
 
 Sources: [setup guide](https://www.caddiehq.com/resources/how-to-use-arccos-golf) · [review](https://breakingeighty.com/arccos-caddie-review) · [start a round](https://support.arccosgolf.com/hc/en-us/articles/35105433819924-How-do-I-start-a-round) · [2026 update](https://www.arccosgolf.com/blogs/community/arccos-just-dropped-its-biggest-app-update-ever-heres-whats-new) · [demo mode](https://eu.arccosgolf.com/blogs/community/arccos-caddie-app-now-features-a-demo-mode)
 
+### Follow-up: Arccos Air and how Arccos recommends practice
+- **What Air is:** a sensorless wearable shot tracker, launched March 18, 2026 ($349.99 including the first year of membership). It only records **on-course** shots and has no range or practice mode. The practice recommendations come from the June 2026 app redesign, which Air feeds data into.
+- **How recommendations work:**
+  - Strokes Gained in 4 categories is measured against a **goal you pick** (a target handicap, scoring average, or SG benchmark).
+  - **"Where to Focus"** names the single area costing the most strokes from a short list. You tap **"Lock it in"**, and drills are generated "to suit the amount of time you have".
+  - A **Pre-Round Warm-Up** builds a 15 / 30 / 60-minute range routine from the current focus.
+- **The gap:** practice sessions aren't logged. The focus only changes when new rounds come in. One review calls it "diagnosis only… what you do about it at the range is still on you."
+- **For Bucket List:**
+  - One "Where to Focus"-style card measured against a **chosen target** (bogey golfer by default), showing the gap ("+2.1 strokes a round vs. a 15 handicap"), with the runner-up in small text.
+  - **Lock in** pins the focus until you change it, so it doesn't flip after every round.
+  - Use **miss directions** for detail Arccos needs sensors for ("most missed greens are short → club-up carry drill").
+  - **Feed practice back in**, which Arccos doesn't: a challenge-score trend for the locked focus.
+  - Label it **"estimated"**, never "Strokes Gained" or "AI". We only have score, putts and hit/miss, not shot distances.
+
+Sources: [Arccos Air](https://www.arccosgolf.com/products/air) · [launch news](https://pluggedingolf.com/golf-news-march-18-2026/) · [Air review](https://pluggedingolf.com/arccos-air-shot-tracker-review/) · [no range use](https://support.arccosgolf.com/hc/en-us/articles/34916090489748) · [app update](https://www.arccosgolf.com/blogs/community/arccos-just-dropped-its-biggest-app-update-ever-heres-whats-new) · [Golf Wire](https://thegolfwire.com/arccos-app-update/) · [Golf Insider](https://golfinsideruk.com/best-strokes-gained-apps/)
+
 ## Break X Golf (practice planning)
 - **First screen:** sign up for a free trial, then a few questions about your game ("no stats needed"), weekly practice time and available facilities.
 - **Time to value:** about 5 minutes to a plan, plus a **quick-start plan** you can use before entering any stats.
